@@ -107,6 +107,39 @@ public class OutputSharpenStageTests
             $"Expected stacked bands to sharpen substantially more (fine-only delta {fineOnlyUndershoot}, combined delta {combinedUndershoot})");
     }
 
+    [Fact]
+    public void Apply_EdgeProtectionReducesSharpeningNearStrongEdge()
+    {
+        const int halfWidth = 40;
+        const int height = 20;
+        const double darkValue = 50;
+        const double lightValue = 200;
+
+        using var edge = MakeStepEdge(halfWidth, height, darkValue, lightValue);
+
+        var band = new BandSharpenOptions { Radius = 2.0, Amount = 1.0, DarkAmount = 0.8, LightAmount = 0.5 };
+        var withoutProtection = new OutputSharpenOptions { Fine = band };
+        var withProtection = withoutProtection with
+        {
+            EdgeProtection = new EdgeProtectionOptions
+            {
+                Amount = 1.0,
+                Threshold = 10.0,
+                Softness = 8.0,
+                DetectionBlur = 3.0,
+            },
+        };
+
+        using var unprotectedResult = OutputSharpenStage.Apply(edge, withoutProtection);
+        using var protectedResult = OutputSharpenStage.Apply(edge, withProtection);
+
+        var unprotectedUndershoot = darkValue - ReadPixel(unprotectedResult, halfWidth - 3, height / 2);
+        var protectedUndershoot = darkValue - ReadPixel(protectedResult, halfWidth - 3, height / 2);
+
+        Assert.True(protectedUndershoot < unprotectedUndershoot,
+            $"Expected edge protection to reduce the undershoot (unprotected {unprotectedUndershoot}, protected {protectedUndershoot})");
+    }
+
     private static Image MakeStepEdge(int halfWidth, int height, double darkValue, double lightValue)
     {
         using var dark = (Image.Black(halfWidth, height) + darkValue).Cast(Enums.BandFormat.Float);

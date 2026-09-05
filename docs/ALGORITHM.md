@@ -25,10 +25,27 @@ never changes, only lightness.
 Implementation: `AcuLume.Core.Sharpening.OutputSharpenStage`, `BandSharpenOptions`,
 `FrequencyBandExtractor`, `AsymmetricDetailMixer`.
 
+## Edge protection (Task 6)
+
+Applied once, after summing band contributions, before adding the total back to L:
+
+1. Denoise: `denoised = GaussianBlur(L, detectionBlur)`.
+2. Gradient: Scharr `gx`, `gy` via 3x3 convolution (preferred over Sobel per spec section 19 for
+   better rotational symmetry); `magnitude = sqrt(gx^2 + gy^2)`.
+3. Mask: `mask = smoothstep(magnitude, threshold - softness/2, threshold + softness/2)` — 0 in
+   flat areas, ramping smoothly to 1 on strong edges. See `SoftThreshold.Smoothstep` (also reused
+   by noise protection later).
+4. Attenuate: `contribution *= (1 - mask * edgeProtectionAmount)`. `edgeProtectionAmount = 0`
+   disables the stage entirely; at `1.0` a fully-saturated edge gets the contribution zeroed, but
+   the smoothstep ramp means it is never an abrupt cutoff (spec: "must attenuate progressively,
+   never completely suppress detail around all edges" — full suppression only happens exactly at
+   the mask's asymptotic maximum on very strong edges, by design, at `amount = 1.0`).
+
+Implementation: `AcuLume.Core.Sharpening.EdgeMaskBuilder`, `SoftThreshold`.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
-- Edge protection mask (Task 6).
 - Soft noise protection (Task 7).
 - Halo limiter (Task 8).
 - Capture sharpening, presets, output-size-aware radius scaling.

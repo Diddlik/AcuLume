@@ -11,5 +11,8 @@ public sealed record OutputSharpenOptions
     /// <summary>Medium band is generally weaker than fine (spec section 15.2) and disabled by default.</summary>
     public BandSharpenOptions Medium { get; init; } = new() { Radius = 1.4, Amount = 0 };
 
+    /// <summary>Protects strong edges from halos (spec section 19). Disabled by default.</summary>
+    public EdgeProtectionOptions EdgeProtection { get; init; } = new();
+
     public bool IsEnabled => Fine.IsEnabled || Medium.IsEnabled;
 }

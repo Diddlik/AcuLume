@@ -6,7 +6,8 @@ namespace AcuLume.Cli.Commands;
 
 /// <summary>
 /// Resize baseline (spec Task 3) plus fine + medium output sharpening with the dark/light
-/// asymmetric split (spec Tasks 4-5). Edge/noise protection and halo limiting are later tasks.
+/// asymmetric split (spec Tasks 4-5) and edge protection (spec Task 6). Noise protection and
+/// halo limiting are later tasks.
 /// </summary>
 public static class SharpenCommand
 {
@@ -23,6 +24,10 @@ public static class SharpenCommand
         var mediumAmountOption = new Option<double>("--medium-amount") { DefaultValueFactory = _ => 0.0 };
         var darkenOption = new Option<double>("--darken") { DefaultValueFactory = _ => 0.8 };
         var lightenOption = new Option<double>("--lighten") { DefaultValueFactory = _ => 0.5 };
+        var edgeProtectionOption = new Option<double>("--edge-protection") { DefaultValueFactory = _ => 0.0 };
+        var edgeThresholdOption = new Option<double>("--edge-threshold") { DefaultValueFactory = _ => 15.0 };
+        var edgeSoftnessOption = new Option<double>("--edge-softness") { DefaultValueFactory = _ => 10.0 };
+        var edgeBlurOption = new Option<double>("--edge-blur") { DefaultValueFactory = _ => 1.0 };
 
         var command = new Command("sharpen", "Resize and sharpen an image.");
         command.Add(inputArgument);
@@ -36,6 +41,10 @@ public static class SharpenCommand
         command.Add(mediumAmountOption);
         command.Add(darkenOption);
         command.Add(lightenOption);
+        command.Add(edgeProtectionOption);
+        command.Add(edgeThresholdOption);
+        command.Add(edgeSoftnessOption);
+        command.Add(edgeBlurOption);
 
         command.SetAction(parseResult =>
         {
@@ -50,6 +59,10 @@ public static class SharpenCommand
             var mediumAmount = parseResult.GetValue(mediumAmountOption);
             var darken = parseResult.GetValue(darkenOption);
             var lighten = parseResult.GetValue(lightenOption);
+            var edgeProtection = parseResult.GetValue(edgeProtectionOption);
+            var edgeThreshold = parseResult.GetValue(edgeThresholdOption);
+            var edgeSoftness = parseResult.GetValue(edgeSoftnessOption);
+            var edgeBlur = parseResult.GetValue(edgeBlurOption);
 
             if (!input.Exists)
             {
@@ -67,6 +80,13 @@ public static class SharpenCommand
             {
                 Console.Error.WriteLine(
                     "--fine-radius/--medium-radius must be positive; --fine-amount/--medium-amount/--darken/--lighten must not be negative.");
+                return (int)ExitCode.InvalidOptions;
+            }
+
+            if (edgeProtection is < 0 or > 1 || edgeThreshold < 0 || edgeSoftness <= 0 || edgeBlur <= 0)
+            {
+                Console.Error.WriteLine(
+                    "--edge-protection must be between 0 and 1; --edge-threshold must not be negative; --edge-softness/--edge-blur must be positive.");
                 return (int)ExitCode.InvalidOptions;
             }
 
@@ -92,6 +112,13 @@ public static class SharpenCommand
                         Amount = mediumAmount,
                         DarkAmount = darken,
                         LightAmount = lighten,
+                    },
+                    EdgeProtection = new EdgeProtectionOptions
+                    {
+                        Amount = edgeProtection,
+                        Threshold = edgeThreshold,
+                        Softness = edgeSoftness,
+                        DetectionBlur = edgeBlur,
                     },
                 },
             };

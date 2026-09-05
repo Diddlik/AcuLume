@@ -19,6 +19,7 @@ public static class OutputSharpenStage
 
         options.Fine.Validate();
         options.Medium.Validate();
+        options.EdgeProtection.Validate();
 
         var originalInterpretation = rgb.Interpretation;
 
@@ -27,7 +28,8 @@ public static class OutputSharpenStage
         using var a = lab[1];
         using var b = lab[2];
 
-        using var contribution = BuildContribution(luminance, options);
+        using var rawContribution = BuildContribution(luminance, options);
+        using var contribution = ApplyEdgeProtection(luminance, rawContribution, options.EdgeProtection);
         using var sharpenedLuminance = luminance + contribution;
 
         using var sharpenedLab = sharpenedLuminance.Bandjoin(a, b);
@@ -62,5 +64,17 @@ public static class OutputSharpenStage
         }
 
         return total ?? throw new InvalidOperationException("BuildContribution called with no enabled bands.");
+    }
+
+    private static Image ApplyEdgeProtection(Image luminance, Image contribution, EdgeProtectionOptions options)
+    {
+        if (!options.IsEnabled)
+        {
+            return contribution.Copy();
+        }
+
+        using var mask = EdgeMaskBuilder.BuildProtectionMask(luminance, options);
+        using var attenuation = 1.0 - (mask * options.Amount);
+        return contribution * attenuation;
     }
 }
