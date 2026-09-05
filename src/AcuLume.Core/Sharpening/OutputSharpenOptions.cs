@@ -14,5 +14,8 @@ public sealed record OutputSharpenOptions
     /// <summary>Protects strong edges from halos (spec section 19). Disabled by default.</summary>
     public EdgeProtectionOptions EdgeProtection { get; init; } = new();
 
+    /// <summary>Suppresses small-magnitude detail likely to be noise (spec section 18). Disabled by default.</summary>
+    public NoiseProtectionOptions NoiseProtection { get; init; } = new();
+
     public bool IsEnabled => Fine.IsEnabled || Medium.IsEnabled;
 }

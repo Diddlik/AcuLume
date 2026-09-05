@@ -140,6 +140,50 @@ public class OutputSharpenStageTests
             $"Expected edge protection to reduce the undershoot (unprotected {unprotectedUndershoot}, protected {protectedUndershoot})");
     }
 
+    /// <summary>
+    /// Synthetic noise field (spec section 41.2 / Task 7): low-amplitude random luminance
+    /// variation should barely be sharpened once noise protection is enabled, while it is
+    /// amplified freely when disabled.
+    /// </summary>
+    [Fact]
+    public void Apply_NoiseProtectionSuppressesSharpeningOfWeakRandomVariation()
+    {
+        using var noise = MakeNoiseField(width: 64, height: 64, sigma: 0.4, mean: 128, seed: 42);
+
+        var band = new BandSharpenOptions { Radius = 1.0, Amount = 1.0, DarkAmount = 0.8, LightAmount = 0.5 };
+        var withoutProtection = new OutputSharpenOptions { Fine = band };
+        var withProtection = withoutProtection with
+        {
+            NoiseProtection = new NoiseProtectionOptions { Amount = 1.0, Threshold = 2.0, Softness = 2.0 },
+        };
+
+        using var unprotectedResult = OutputSharpenStage.Apply(noise, withoutProtection);
+        using var protectedResult = OutputSharpenStage.Apply(noise, withProtection);
+
+        // Compare against the Lab round-trip alone (no sharpening) rather than the raw input:
+        // colourspace conversion has its own float rounding error that otherwise swamps the
+        // much smaller sharpening delta we actually want to measure.
+        using var lab = noise.Colourspace(Enums.Interpretation.Lab);
+        using var roundTripBaseline = lab.Colourspace(noise.Interpretation);
+
+        using var unprotectedDelta = (unprotectedResult - roundTripBaseline).Abs();
+        using var protectedDelta = (protectedResult - roundTripBaseline).Abs();
+
+        var unprotectedMeanDelta = unprotectedDelta.Avg();
+        var protectedMeanDelta = protectedDelta.Avg();
+
+        Assert.True(protectedMeanDelta < unprotectedMeanDelta * 0.5,
+            $"Expected noise protection to substantially reduce sharpening of noise " +
+            $"(unprotected mean delta {unprotectedMeanDelta}, protected mean delta {protectedMeanDelta})");
+    }
+
+    private static Image MakeNoiseField(int width, int height, double sigma, double mean, int seed)
+    {
+        using var noise = Image.Gaussnoise(width, height, sigma: sigma, mean: mean, seed: seed);
+        using var rgb = noise.Bandjoin(noise, noise);
+        return rgb.Copy(interpretation: Enums.Interpretation.Srgb);
+    }
+
     private static Image MakeStepEdge(int halfWidth, int height, double darkValue, double lightValue)
     {
         using var dark = (Image.Black(halfWidth, height) + darkValue).Cast(Enums.BandFormat.Float);

@@ -43,9 +43,27 @@ Applied once, after summing band contributions, before adding the total back to 
 
 Implementation: `AcuLume.Core.Sharpening.EdgeMaskBuilder`, `SoftThreshold`.
 
+## Noise protection (Task 7)
+
+Applied to each band's raw high-pass detail, before the dark/light split (order matters: the
+threshold decision uses the unsplit `abs(detail)`, so it can't come after the split):
+
+```text
+weight          = smoothstep(abs(detail), threshold - softness/2, threshold + softness/2)
+effectiveWeight = 1 - amount * (1 - weight)   // amount blends "always pass" vs the full curve
+detail'         = detail * effectiveWeight
+```
+
+`amount = 0` disables it (full detail always passes). Implementation:
+`AcuLume.Core.Sharpening.NoiseProtection`, reusing `SoftThreshold.Smoothstep`.
+
+Testing note: a whole-pipeline comparison against the *raw* input is misleading here — the
+Lab↔sRGB colourspace round-trip itself has a float rounding error an order of magnitude larger
+than the sharpening delta on near-noise-floor detail. Tests instead compare against a
+round-trip-only baseline (same conversion, zero sharpening) so the round-trip error cancels out.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
-- Soft noise protection (Task 7).
 - Halo limiter (Task 8).
 - Capture sharpening, presets, output-size-aware radius scaling.

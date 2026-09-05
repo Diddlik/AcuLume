@@ -6,8 +6,8 @@ namespace AcuLume.Cli.Commands;
 
 /// <summary>
 /// Resize baseline (spec Task 3) plus fine + medium output sharpening with the dark/light
-/// asymmetric split (spec Tasks 4-5) and edge protection (spec Task 6). Noise protection and
-/// halo limiting are later tasks.
+/// asymmetric split (spec Tasks 4-5), edge protection (spec Task 6) and noise protection
+/// (spec Task 7). Halo limiting is the last remaining task.
 /// </summary>
 public static class SharpenCommand
 {
@@ -28,6 +28,9 @@ public static class SharpenCommand
         var edgeThresholdOption = new Option<double>("--edge-threshold") { DefaultValueFactory = _ => 15.0 };
         var edgeSoftnessOption = new Option<double>("--edge-softness") { DefaultValueFactory = _ => 10.0 };
         var edgeBlurOption = new Option<double>("--edge-blur") { DefaultValueFactory = _ => 1.0 };
+        var noiseProtectionOption = new Option<double>("--noise-protection") { DefaultValueFactory = _ => 0.0 };
+        var noiseThresholdOption = new Option<double>("--noise-threshold") { DefaultValueFactory = _ => 1.0 };
+        var noiseSoftnessOption = new Option<double>("--noise-softness") { DefaultValueFactory = _ => 1.5 };
 
         var command = new Command("sharpen", "Resize and sharpen an image.");
         command.Add(inputArgument);
@@ -45,6 +48,9 @@ public static class SharpenCommand
         command.Add(edgeThresholdOption);
         command.Add(edgeSoftnessOption);
         command.Add(edgeBlurOption);
+        command.Add(noiseProtectionOption);
+        command.Add(noiseThresholdOption);
+        command.Add(noiseSoftnessOption);
 
         command.SetAction(parseResult =>
         {
@@ -63,6 +69,9 @@ public static class SharpenCommand
             var edgeThreshold = parseResult.GetValue(edgeThresholdOption);
             var edgeSoftness = parseResult.GetValue(edgeSoftnessOption);
             var edgeBlur = parseResult.GetValue(edgeBlurOption);
+            var noiseProtection = parseResult.GetValue(noiseProtectionOption);
+            var noiseThreshold = parseResult.GetValue(noiseThresholdOption);
+            var noiseSoftness = parseResult.GetValue(noiseSoftnessOption);
 
             if (!input.Exists)
             {
@@ -87,6 +96,13 @@ public static class SharpenCommand
             {
                 Console.Error.WriteLine(
                     "--edge-protection must be between 0 and 1; --edge-threshold must not be negative; --edge-softness/--edge-blur must be positive.");
+                return (int)ExitCode.InvalidOptions;
+            }
+
+            if (noiseProtection is < 0 or > 1 || noiseThreshold < 0 || noiseSoftness <= 0)
+            {
+                Console.Error.WriteLine(
+                    "--noise-protection must be between 0 and 1; --noise-threshold must not be negative; --noise-softness must be positive.");
                 return (int)ExitCode.InvalidOptions;
             }
 
@@ -119,6 +135,12 @@ public static class SharpenCommand
                         Threshold = edgeThreshold,
                         Softness = edgeSoftness,
                         DetectionBlur = edgeBlur,
+                    },
+                    NoiseProtection = new NoiseProtectionOptions
+                    {
+                        Amount = noiseProtection,
+                        Threshold = noiseThreshold,
+                        Softness = noiseSoftness,
                     },
                 },
             };

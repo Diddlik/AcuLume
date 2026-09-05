@@ -20,6 +20,7 @@ public static class OutputSharpenStage
         options.Fine.Validate();
         options.Medium.Validate();
         options.EdgeProtection.Validate();
+        options.NoiseProtection.Validate();
 
         var originalInterpretation = rgb.Interpretation;
 
@@ -48,7 +49,8 @@ public static class OutputSharpenStage
             }
 
             using var highPass = FrequencyBandExtractor.ExtractHighPass(luminance, band.Radius);
-            using var weighted = AsymmetricDetailMixer.Apply(highPass, band.DarkAmount, band.LightAmount);
+            using var denoised = NoiseProtection.Apply(highPass, options.NoiseProtection);
+            using var weighted = AsymmetricDetailMixer.Apply(denoised, band.DarkAmount, band.LightAmount);
             using var scaled = weighted * band.Amount;
 
             if (total is null)
