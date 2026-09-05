@@ -1,3 +1,5 @@
+using AcuLume.Core.Sharpening;
+
 namespace AcuLume.Core;
 
 /// <summary>
@@ -13,4 +15,7 @@ public sealed record ProcessingOptions
 
     /// <summary>JPEG quality (1-100). Ignored for lossless formats.</summary>
     public int Quality { get; init; } = 90;
+
+    /// <summary>Fine-frequency output sharpening, applied after resize (spec section 23). Disabled by default.</summary>
+    public FineSharpenOptions FineSharpen { get; init; } = new();
 }

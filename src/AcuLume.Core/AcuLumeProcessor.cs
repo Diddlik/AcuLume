@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using AcuLume.Core.Imaging;
+using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Core;
 
@@ -34,6 +35,12 @@ public sealed class AcuLumeProcessor
         if (options.LongEdge is { } longEdge)
         {
             processed = Resize(inputPath, processed, longEdge, options.AllowUpscale);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (options.FineSharpen.IsEnabled)
+        {
+            processed = Sharpen(inputPath, processed, options.FineSharpen);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -78,6 +85,18 @@ public sealed class AcuLumeProcessor
         catch (Exception ex)
         {
             throw new AcuLumeProcessingException(inputPath, ProcessingStage.Resize, $"Resize failed: {ex.Message}", ex);
+        }
+    }
+
+    private static NetVips.Image Sharpen(string inputPath, NetVips.Image image, FineSharpenOptions options)
+    {
+        try
+        {
+            return FineOutputSharpenStage.Apply(image, options);
+        }
+        catch (Exception ex)
+        {
+            throw new AcuLumeProcessingException(inputPath, ProcessingStage.Sharpen, $"Sharpen failed: {ex.Message}", ex);
         }
     }
 

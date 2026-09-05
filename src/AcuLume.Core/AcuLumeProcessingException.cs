@@ -13,5 +13,6 @@ public enum ProcessingStage
     Validate,
     Decode,
     Resize,
+    Sharpen,
     Encode,
 }
