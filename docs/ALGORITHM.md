@@ -62,8 +62,31 @@ Lab↔sRGB colourspace round-trip itself has a float rounding error an order of 
 than the sharpening delta on near-noise-floor detail. Tests instead compare against a
 round-trip-only baseline (same conversion, zero sharpening) so the round-trip error cancels out.
 
+## Halo limiter (Task 8)
+
+Applied once, after edge protection, right before the (edge-protected, noise-protected,
+band-summed) contribution is added back to L:
+
+1. Local contrast: `localMax`/`localMin` from an order-statistic ("rank") filter over a
+   `(2*windowRadius+1)`-square window on the *pre-sharpening* luminance; `localRange = max - min`.
+2. Limits: `maxOvershoot = localRange * lightLimit`, `maxUndershoot = localRange * darkLimit`
+   (separate, because bright halos are usually more objectionable — spec section 20 — so the
+   default `lightLimit` is tighter than `darkLimit`).
+3. Clamp: `clamped = clamp(contribution, -maxUndershoot, maxOvershoot)`.
+4. Blend: `final = contribution * (1 - amount) + clamped * amount`. `amount = 0` disables it.
+
+Because the limits scale with *local* contrast rather than a fixed number, a genuinely
+high-contrast edge is allowed a large correction while a flat area's overshoot gets clamped
+toward zero — this is what keeps the limiter from being "final-image clipping" (spec: "do not
+silently clip the final image as the primary halo-management technique").
+
+Implementation: `AcuLume.Core.Sharpening.HaloLimiter`, `HaloLimiterOptions`, shared
+`ImageClamp` helper (also now used by `SoftThreshold`).
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
-- Halo limiter (Task 8).
-- Capture sharpening, presets, output-size-aware radius scaling.
+- Capture sharpening, presets, output-size-aware radius scaling, batch command, debug image export.
+
+This completes spec Tasks 1-8 (the full Phase 1 output-sharpening pipeline). Remaining work is
+Task 9 (initial web preset + comparison outputs) and Phase 2 empirical calibration.

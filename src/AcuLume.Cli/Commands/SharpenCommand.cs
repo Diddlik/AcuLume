@@ -5,9 +5,9 @@ using AcuLume.Core.Sharpening;
 namespace AcuLume.Cli.Commands;
 
 /// <summary>
-/// Resize baseline (spec Task 3) plus fine + medium output sharpening with the dark/light
-/// asymmetric split (spec Tasks 4-5), edge protection (spec Task 6) and noise protection
-/// (spec Task 7). Halo limiting is the last remaining task.
+/// Resize baseline (spec Task 3) plus the full output-sharpening pipeline: fine + medium bands
+/// with dark/light asymmetric split (spec Tasks 4-5), edge protection (spec Task 6), noise
+/// protection (spec Task 7) and a halo limiter (spec Task 8).
 /// </summary>
 public static class SharpenCommand
 {
@@ -31,6 +31,10 @@ public static class SharpenCommand
         var noiseProtectionOption = new Option<double>("--noise-protection") { DefaultValueFactory = _ => 0.0 };
         var noiseThresholdOption = new Option<double>("--noise-threshold") { DefaultValueFactory = _ => 1.0 };
         var noiseSoftnessOption = new Option<double>("--noise-softness") { DefaultValueFactory = _ => 1.5 };
+        var haloProtectionOption = new Option<double>("--halo-protection") { DefaultValueFactory = _ => 0.0 };
+        var haloWindowOption = new Option<double>("--halo-window") { DefaultValueFactory = _ => 2.0 };
+        var haloDarkLimitOption = new Option<double>("--halo-dark-limit") { DefaultValueFactory = _ => 0.5 };
+        var haloLightLimitOption = new Option<double>("--halo-light-limit") { DefaultValueFactory = _ => 0.3 };
 
         var command = new Command("sharpen", "Resize and sharpen an image.");
         command.Add(inputArgument);
@@ -51,6 +55,10 @@ public static class SharpenCommand
         command.Add(noiseProtectionOption);
         command.Add(noiseThresholdOption);
         command.Add(noiseSoftnessOption);
+        command.Add(haloProtectionOption);
+        command.Add(haloWindowOption);
+        command.Add(haloDarkLimitOption);
+        command.Add(haloLightLimitOption);
 
         command.SetAction(parseResult =>
         {
@@ -72,6 +80,10 @@ public static class SharpenCommand
             var noiseProtection = parseResult.GetValue(noiseProtectionOption);
             var noiseThreshold = parseResult.GetValue(noiseThresholdOption);
             var noiseSoftness = parseResult.GetValue(noiseSoftnessOption);
+            var haloProtection = parseResult.GetValue(haloProtectionOption);
+            var haloWindow = parseResult.GetValue(haloWindowOption);
+            var haloDarkLimit = parseResult.GetValue(haloDarkLimitOption);
+            var haloLightLimit = parseResult.GetValue(haloLightLimitOption);
 
             if (!input.Exists)
             {
@@ -103,6 +115,13 @@ public static class SharpenCommand
             {
                 Console.Error.WriteLine(
                     "--noise-protection must be between 0 and 1; --noise-threshold must not be negative; --noise-softness must be positive.");
+                return (int)ExitCode.InvalidOptions;
+            }
+
+            if (haloProtection is < 0 or > 1 || haloWindow <= 0 || haloDarkLimit < 0 || haloLightLimit < 0)
+            {
+                Console.Error.WriteLine(
+                    "--halo-protection must be between 0 and 1; --halo-window must be positive; --halo-dark-limit/--halo-light-limit must not be negative.");
                 return (int)ExitCode.InvalidOptions;
             }
 
@@ -141,6 +160,13 @@ public static class SharpenCommand
                         Amount = noiseProtection,
                         Threshold = noiseThreshold,
                         Softness = noiseSoftness,
+                    },
+                    HaloLimiter = new HaloLimiterOptions
+                    {
+                        Amount = haloProtection,
+                        WindowRadius = haloWindow,
+                        DarkLimit = haloDarkLimit,
+                        LightLimit = haloLightLimit,
                     },
                 },
             };

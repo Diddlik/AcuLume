@@ -21,6 +21,7 @@ public static class OutputSharpenStage
         options.Medium.Validate();
         options.EdgeProtection.Validate();
         options.NoiseProtection.Validate();
+        options.HaloLimiter.Validate();
 
         var originalInterpretation = rgb.Interpretation;
 
@@ -30,7 +31,8 @@ public static class OutputSharpenStage
         using var b = lab[2];
 
         using var rawContribution = BuildContribution(luminance, options);
-        using var contribution = ApplyEdgeProtection(luminance, rawContribution, options.EdgeProtection);
+        using var edgeProtected = ApplyEdgeProtection(luminance, rawContribution, options.EdgeProtection);
+        using var contribution = HaloLimiter.Apply(luminance, edgeProtected, options.HaloLimiter);
         using var sharpenedLuminance = luminance + contribution;
 
         using var sharpenedLab = sharpenedLuminance.Bandjoin(a, b);

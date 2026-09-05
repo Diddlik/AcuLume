@@ -17,5 +17,8 @@ public sealed record OutputSharpenOptions
     /// <summary>Suppresses small-magnitude detail likely to be noise (spec section 18). Disabled by default.</summary>
     public NoiseProtectionOptions NoiseProtection { get; init; } = new();
 
+    /// <summary>Caps overshoot/undershoot to a fraction of local contrast (spec section 20). Disabled by default.</summary>
+    public HaloLimiterOptions HaloLimiter { get; init; } = new();
+
     public bool IsEnabled => Fine.IsEnabled || Medium.IsEnabled;
 }

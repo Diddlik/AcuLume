@@ -140,6 +140,39 @@ public class OutputSharpenStageTests
             $"Expected edge protection to reduce the undershoot (unprotected {unprotectedUndershoot}, protected {protectedUndershoot})");
     }
 
+    [Fact]
+    public void Apply_HaloLimiterReducesOvershootBeyondLocalContrast()
+    {
+        const int halfWidth = 40;
+        const int height = 20;
+        const double darkValue = 50;
+        const double lightValue = 200;
+
+        using var edge = MakeStepEdge(halfWidth, height, darkValue, lightValue);
+
+        // A large, aggressively-scaled fine band to produce an overshoot much larger than the
+        // local contrast range should reasonably allow.
+        var band = new BandSharpenOptions { Radius = 2.0, Amount = 5.0, DarkAmount = 0.8, LightAmount = 0.5 };
+        var withoutLimiter = new OutputSharpenOptions { Fine = band };
+        var withLimiter = withoutLimiter with
+        {
+            // A small window means a point a few px into the (otherwise flat) light region sees
+            // ~0 local range, so any overshoot the wider fine band still produces there gets
+            // fully suppressed while the unlimited version keeps it.
+            HaloLimiter = new HaloLimiterOptions { Amount = 1.0, WindowRadius = 1.0, DarkLimit = 0.5, LightLimit = 0.3 },
+        };
+
+        using var unlimitedResult = OutputSharpenStage.Apply(edge, withoutLimiter);
+        using var limitedResult = OutputSharpenStage.Apply(edge, withLimiter);
+
+        var samplePoint = halfWidth + 2;
+        var unlimitedOvershoot = ReadPixel(unlimitedResult, samplePoint, height / 2) - lightValue;
+        var limitedOvershoot = ReadPixel(limitedResult, samplePoint, height / 2) - lightValue;
+
+        Assert.True(limitedOvershoot < unlimitedOvershoot,
+            $"Expected the halo limiter to reduce the overshoot (unlimited {unlimitedOvershoot}, limited {limitedOvershoot})");
+    }
+
     /// <summary>
     /// Synthetic noise field (spec section 41.2 / Task 7): low-amplitude random luminance
     /// variation should barely be sharpened once noise protection is enabled, while it is
