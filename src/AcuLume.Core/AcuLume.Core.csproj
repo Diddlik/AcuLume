@@ -5,4 +5,12 @@
     <PackageReference Include="NetVips.Native" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Built-in presets live at the repo root (presets/) per the spec's solution layout;
+         embedded here so they're always available regardless of working directory. -->
+    <EmbeddedResource Include="..\..\presets\*.json">
+      <LogicalName>Presets.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

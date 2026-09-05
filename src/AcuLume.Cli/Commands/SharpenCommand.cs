@@ -1,5 +1,6 @@
 using System.CommandLine;
 using AcuLume.Core;
+using AcuLume.Core.Configuration;
 using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Cli.Commands;
@@ -7,37 +8,40 @@ namespace AcuLume.Cli.Commands;
 /// <summary>
 /// Resize baseline (spec Task 3) plus the full output-sharpening pipeline: fine + medium bands
 /// with dark/light asymmetric split (spec Tasks 4-5), edge protection (spec Task 6), noise
-/// protection (spec Task 7) and a halo limiter (spec Task 8).
+/// protection (spec Task 7), a halo limiter (spec Task 8), and presets (spec Task 9).
+/// CLI flags always take precedence over the preset's values (spec section 26.7).
 /// </summary>
 public static class SharpenCommand
 {
     public static Command Create()
     {
         var inputArgument = new Argument<FileInfo>("input");
+        var presetOption = new Option<string?>("--preset");
         var longEdgeOption = new Option<int?>("--long-edge");
         var outputOption = new Option<FileInfo?>("--output", "-o");
-        var qualityOption = new Option<int>("--quality") { DefaultValueFactory = _ => 90 };
+        var qualityOption = new Option<int?>("--quality");
         var allowUpscaleOption = new Option<bool>("--allow-upscale");
-        var fineRadiusOption = new Option<double>("--fine-radius") { DefaultValueFactory = _ => 0.6 };
-        var fineAmountOption = new Option<double>("--fine-amount") { DefaultValueFactory = _ => 0.0 };
-        var mediumRadiusOption = new Option<double>("--medium-radius") { DefaultValueFactory = _ => 1.4 };
-        var mediumAmountOption = new Option<double>("--medium-amount") { DefaultValueFactory = _ => 0.0 };
-        var darkenOption = new Option<double>("--darken") { DefaultValueFactory = _ => 0.8 };
-        var lightenOption = new Option<double>("--lighten") { DefaultValueFactory = _ => 0.5 };
-        var edgeProtectionOption = new Option<double>("--edge-protection") { DefaultValueFactory = _ => 0.0 };
-        var edgeThresholdOption = new Option<double>("--edge-threshold") { DefaultValueFactory = _ => 15.0 };
-        var edgeSoftnessOption = new Option<double>("--edge-softness") { DefaultValueFactory = _ => 10.0 };
-        var edgeBlurOption = new Option<double>("--edge-blur") { DefaultValueFactory = _ => 1.0 };
-        var noiseProtectionOption = new Option<double>("--noise-protection") { DefaultValueFactory = _ => 0.0 };
-        var noiseThresholdOption = new Option<double>("--noise-threshold") { DefaultValueFactory = _ => 1.0 };
-        var noiseSoftnessOption = new Option<double>("--noise-softness") { DefaultValueFactory = _ => 1.5 };
-        var haloProtectionOption = new Option<double>("--halo-protection") { DefaultValueFactory = _ => 0.0 };
-        var haloWindowOption = new Option<double>("--halo-window") { DefaultValueFactory = _ => 2.0 };
-        var haloDarkLimitOption = new Option<double>("--halo-dark-limit") { DefaultValueFactory = _ => 0.5 };
-        var haloLightLimitOption = new Option<double>("--halo-light-limit") { DefaultValueFactory = _ => 0.3 };
+        var fineRadiusOption = new Option<double?>("--fine-radius");
+        var fineAmountOption = new Option<double?>("--fine-amount");
+        var mediumRadiusOption = new Option<double?>("--medium-radius");
+        var mediumAmountOption = new Option<double?>("--medium-amount");
+        var darkenOption = new Option<double?>("--darken");
+        var lightenOption = new Option<double?>("--lighten");
+        var edgeProtectionOption = new Option<double?>("--edge-protection");
+        var edgeThresholdOption = new Option<double?>("--edge-threshold");
+        var edgeSoftnessOption = new Option<double?>("--edge-softness");
+        var edgeBlurOption = new Option<double?>("--edge-blur");
+        var noiseProtectionOption = new Option<double?>("--noise-protection");
+        var noiseThresholdOption = new Option<double?>("--noise-threshold");
+        var noiseSoftnessOption = new Option<double?>("--noise-softness");
+        var haloProtectionOption = new Option<double?>("--halo-protection");
+        var haloWindowOption = new Option<double?>("--halo-window");
+        var haloDarkLimitOption = new Option<double?>("--halo-dark-limit");
+        var haloLightLimitOption = new Option<double?>("--halo-light-limit");
 
         var command = new Command("sharpen", "Resize and sharpen an image.");
         command.Add(inputArgument);
+        command.Add(presetOption);
         command.Add(longEdgeOption);
         command.Add(outputOption);
         command.Add(qualityOption);
@@ -63,27 +67,6 @@ public static class SharpenCommand
         command.SetAction(parseResult =>
         {
             var input = parseResult.GetValue(inputArgument)!;
-            var longEdge = parseResult.GetValue(longEdgeOption);
-            var outputFile = parseResult.GetValue(outputOption);
-            var quality = parseResult.GetValue(qualityOption);
-            var allowUpscale = parseResult.GetValue(allowUpscaleOption);
-            var fineRadius = parseResult.GetValue(fineRadiusOption);
-            var fineAmount = parseResult.GetValue(fineAmountOption);
-            var mediumRadius = parseResult.GetValue(mediumRadiusOption);
-            var mediumAmount = parseResult.GetValue(mediumAmountOption);
-            var darken = parseResult.GetValue(darkenOption);
-            var lighten = parseResult.GetValue(lightenOption);
-            var edgeProtection = parseResult.GetValue(edgeProtectionOption);
-            var edgeThreshold = parseResult.GetValue(edgeThresholdOption);
-            var edgeSoftness = parseResult.GetValue(edgeSoftnessOption);
-            var edgeBlur = parseResult.GetValue(edgeBlurOption);
-            var noiseProtection = parseResult.GetValue(noiseProtectionOption);
-            var noiseThreshold = parseResult.GetValue(noiseThresholdOption);
-            var noiseSoftness = parseResult.GetValue(noiseSoftnessOption);
-            var haloProtection = parseResult.GetValue(haloProtectionOption);
-            var haloWindow = parseResult.GetValue(haloWindowOption);
-            var haloDarkLimit = parseResult.GetValue(haloDarkLimitOption);
-            var haloLightLimit = parseResult.GetValue(haloLightLimitOption);
 
             if (!input.Exists)
             {
@@ -91,85 +74,106 @@ public static class SharpenCommand
                 return (int)ExitCode.InputNotFound;
             }
 
-            if (quality is < 1 or > 100)
+            ProcessingOptions baseOptions;
+            var presetName = parseResult.GetValue(presetOption);
+            if (presetName is not null)
             {
-                Console.Error.WriteLine("--quality must be between 1 and 100.");
-                return (int)ExitCode.InvalidOptions;
+                try
+                {
+                    baseOptions = PresetLoader.ToProcessingOptions(PresetLoader.Load(presetName));
+                }
+                catch (Exception ex) when (ex is FileNotFoundException or PresetValidationException)
+                {
+                    Console.Error.WriteLine($"ERROR invalid preset '{presetName}': {ex.Message}");
+                    return (int)ExitCode.InvalidPreset;
+                }
+            }
+            else
+            {
+                baseOptions = new ProcessingOptions();
             }
 
-            if (fineRadius <= 0 || mediumRadius <= 0 || fineAmount < 0 || mediumAmount < 0 || darken < 0 || lighten < 0)
-            {
-                Console.Error.WriteLine(
-                    "--fine-radius/--medium-radius must be positive; --fine-amount/--medium-amount/--darken/--lighten must not be negative.");
-                return (int)ExitCode.InvalidOptions;
-            }
+            var longEdge = parseResult.GetValue(longEdgeOption) ?? baseOptions.LongEdge;
+            var quality = parseResult.GetValue(qualityOption) ?? baseOptions.Quality;
+            var allowUpscale = parseResult.GetValue(allowUpscaleOption) || baseOptions.AllowUpscale;
 
-            if (edgeProtection is < 0 or > 1 || edgeThreshold < 0 || edgeSoftness <= 0 || edgeBlur <= 0)
-            {
-                Console.Error.WriteLine(
-                    "--edge-protection must be between 0 and 1; --edge-threshold must not be negative; --edge-softness/--edge-blur must be positive.");
-                return (int)ExitCode.InvalidOptions;
-            }
+            var baseFine = baseOptions.OutputSharpen.Fine;
+            var baseMedium = baseOptions.OutputSharpen.Medium;
+            var baseEdge = baseOptions.OutputSharpen.EdgeProtection;
+            var baseNoise = baseOptions.OutputSharpen.NoiseProtection;
+            var baseHalo = baseOptions.OutputSharpen.HaloLimiter;
+            var darken = parseResult.GetValue(darkenOption);
+            var lighten = parseResult.GetValue(lightenOption);
 
-            if (noiseProtection is < 0 or > 1 || noiseThreshold < 0 || noiseSoftness <= 0)
-            {
-                Console.Error.WriteLine(
-                    "--noise-protection must be between 0 and 1; --noise-threshold must not be negative; --noise-softness must be positive.");
-                return (int)ExitCode.InvalidOptions;
-            }
-
-            if (haloProtection is < 0 or > 1 || haloWindow <= 0 || haloDarkLimit < 0 || haloLightLimit < 0)
-            {
-                Console.Error.WriteLine(
-                    "--halo-protection must be between 0 and 1; --halo-window must be positive; --halo-dark-limit/--halo-light-limit must not be negative.");
-                return (int)ExitCode.InvalidOptions;
-            }
-
-            var outputPath = outputFile?.FullName ?? DefaultOutputPath(input);
-
-            var options = new ProcessingOptions
+            var options = baseOptions with
             {
                 LongEdge = longEdge,
                 AllowUpscale = allowUpscale,
                 Quality = quality,
                 OutputSharpen = new OutputSharpenOptions
                 {
-                    Fine = new BandSharpenOptions
+                    Fine = baseFine with
                     {
-                        Radius = fineRadius,
-                        Amount = fineAmount,
-                        DarkAmount = darken,
-                        LightAmount = lighten,
+                        Radius = parseResult.GetValue(fineRadiusOption) ?? baseFine.Radius,
+                        Amount = parseResult.GetValue(fineAmountOption) ?? baseFine.Amount,
+                        DarkAmount = darken ?? baseFine.DarkAmount,
+                        LightAmount = lighten ?? baseFine.LightAmount,
                     },
-                    Medium = new BandSharpenOptions
+                    Medium = baseMedium with
                     {
-                        Radius = mediumRadius,
-                        Amount = mediumAmount,
-                        DarkAmount = darken,
-                        LightAmount = lighten,
+                        Radius = parseResult.GetValue(mediumRadiusOption) ?? baseMedium.Radius,
+                        Amount = parseResult.GetValue(mediumAmountOption) ?? baseMedium.Amount,
+                        DarkAmount = darken ?? baseMedium.DarkAmount,
+                        LightAmount = lighten ?? baseMedium.LightAmount,
                     },
-                    EdgeProtection = new EdgeProtectionOptions
+                    EdgeProtection = baseEdge with
                     {
-                        Amount = edgeProtection,
-                        Threshold = edgeThreshold,
-                        Softness = edgeSoftness,
-                        DetectionBlur = edgeBlur,
+                        Amount = parseResult.GetValue(edgeProtectionOption) ?? baseEdge.Amount,
+                        Threshold = parseResult.GetValue(edgeThresholdOption) ?? baseEdge.Threshold,
+                        Softness = parseResult.GetValue(edgeSoftnessOption) ?? baseEdge.Softness,
+                        DetectionBlur = parseResult.GetValue(edgeBlurOption) ?? baseEdge.DetectionBlur,
                     },
-                    NoiseProtection = new NoiseProtectionOptions
+                    NoiseProtection = baseNoise with
                     {
-                        Amount = noiseProtection,
-                        Threshold = noiseThreshold,
-                        Softness = noiseSoftness,
+                        Amount = parseResult.GetValue(noiseProtectionOption) ?? baseNoise.Amount,
+                        Threshold = parseResult.GetValue(noiseThresholdOption) ?? baseNoise.Threshold,
+                        Softness = parseResult.GetValue(noiseSoftnessOption) ?? baseNoise.Softness,
                     },
-                    HaloLimiter = new HaloLimiterOptions
+                    HaloLimiter = baseHalo with
                     {
-                        Amount = haloProtection,
-                        WindowRadius = haloWindow,
-                        DarkLimit = haloDarkLimit,
-                        LightLimit = haloLightLimit,
+                        Amount = parseResult.GetValue(haloProtectionOption) ?? baseHalo.Amount,
+                        WindowRadius = parseResult.GetValue(haloWindowOption) ?? baseHalo.WindowRadius,
+                        DarkLimit = parseResult.GetValue(haloDarkLimitOption) ?? baseHalo.DarkLimit,
+                        LightLimit = parseResult.GetValue(haloLightLimitOption) ?? baseHalo.LightLimit,
                     },
                 },
             };
+
+            try
+            {
+                if (options.LongEdge is <= 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(options.LongEdge), "--long-edge must be positive.");
+                }
+
+                if (options.Quality is < 1 or > 100)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(options.Quality), "--quality must be between 1 and 100.");
+                }
+
+                options.OutputSharpen.Fine.Validate();
+                options.OutputSharpen.Medium.Validate();
+                options.OutputSharpen.EdgeProtection.Validate();
+                options.OutputSharpen.NoiseProtection.Validate();
+                options.OutputSharpen.HaloLimiter.Validate();
+            }
+            catch (ArgumentOutOfRangeException ex)
+            {
+                Console.Error.WriteLine($"Invalid option: {ex.Message}");
+                return (int)ExitCode.InvalidOptions;
+            }
+
+            var outputPath = parseResult.GetValue(outputOption)?.FullName ?? DefaultOutputPath(input);
 
             var processor = new AcuLumeProcessor();
             try

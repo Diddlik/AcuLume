@@ -83,10 +83,30 @@ silently clip the final image as the primary halo-management technique").
 Implementation: `AcuLume.Core.Sharpening.HaloLimiter`, `HaloLimiterOptions`, shared
 `ImageClamp` helper (also now used by `SoftThreshold`).
 
+## Presets and comparison outputs (Task 9)
+
+Presets (`AcuLume.Core.Configuration.SharpenPreset`/`PresetLoader`/`PresetValidator`) are
+versioned JSON, embedded into `AcuLume.Core` from the repo's top-level `presets/` directory and
+also loadable from an arbitrary file path. The schema is deliberately narrower than the spec's
+illustrative full example: it omits `captureSharpen` since that stage isn't implemented yet
+(Phase 4) — adding an unused, speculative field now would just be dead schema to maintain.
+`noiseProtection`/`edgeProtection`/`haloProtection` are single amount knobs in presets; the more
+granular threshold/softness/window controls remain CLI-override-only for now.
+
+`aculume compare` (`AcuLume.Core.Comparison.ComparisonSetBuilder`) generates the variants spec
+section 43 asks for: `original` (byte-identical copy), `resize-only`, a naive per-channel
+`BaselineUnsharpMask` (spec section 44 — deliberately *not* luminance-aware, to make the
+pipeline's benefit visible by contrast), and the two built-in presets. `--crop label=x,y,w,h`
+(repeatable) re-extracts the same fixed region from every variant via `CropGenerator` — these are
+caller-supplied geometric coordinates (e.g. picked once by eye around a strong edge in a specific
+test photo), not automatic content detection, since a robust detector for "shadow noise" or
+"highlight detail" regions would be over-engineering for Phase 1.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
-- Capture sharpening, presets, output-size-aware radius scaling, batch command, debug image export.
+- Capture sharpening, output-size-aware radius scaling, batch command, debug image export.
 
-This completes spec Tasks 1-8 (the full Phase 1 output-sharpening pipeline). Remaining work is
-Task 9 (initial web preset + comparison outputs) and Phase 2 empirical calibration.
+This completes spec Tasks 1-9 (the full Phase 1 output-sharpening pipeline, presets, and
+comparison tooling). Remaining work is Phase 2 (empirical calibration against a real photo
+validation set) and later phases (resize research, advanced restoration, distribution).

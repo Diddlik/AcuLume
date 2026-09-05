@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "name": "web-1800-natural",
+  "resize": {
+    "enabled": true,
+    "longEdge": 1800,
+    "allowUpscale": false
+  },
+  "outputSharpen": {
+    "fine": {
+      "radius": 0.35,
+      "amount": 1.00,
+      "darkAmount": 0.80,
+      "lightAmount": 0.50
+    },
+    "medium": {
+      "radius": 0.90,
+      "amount": 0.30,
+      "darkAmount": 0.80,
+      "lightAmount": 0.50
+    },
+    "noiseProtection": 0.45,
+    "edgeProtection": 0.65,
+    "haloProtection": 0.70
+  },
+  "output": {
+    "quality": 90
+  }
+}

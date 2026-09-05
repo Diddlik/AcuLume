@@ -11,6 +11,8 @@ public static class CliApp
         var root = new RootCommand("AcuLume — local, deterministic, output-aware image sharpening.");
         root.Add(InfoCommand.Create());
         root.Add(SharpenCommand.Create());
+        root.Add(PresetCommand.Create());
+        root.Add(CompareCommand.Create());
         return root;
     }
 

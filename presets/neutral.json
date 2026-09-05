@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "neutral",
+  "resize": {
+    "enabled": false
+  },
+  "outputSharpen": {
+    "fine": {
+      "radius": 0.60,
+      "amount": 0.0,
+      "darkAmount": 0.80,
+      "lightAmount": 0.50
+    },
+    "medium": {
+      "radius": 1.40,
+      "amount": 0.0,
+      "darkAmount": 0.80,
+      "lightAmount": 0.50
+    },
+    "noiseProtection": 0.0,
+    "edgeProtection": 0.0,
+    "haloProtection": 0.0
+  },
+  "output": {
+    "quality": 92
+  }
+}
