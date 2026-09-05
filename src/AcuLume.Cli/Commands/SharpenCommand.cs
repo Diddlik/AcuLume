@@ -5,8 +5,8 @@ using AcuLume.Core.Sharpening;
 namespace AcuLume.Cli.Commands;
 
 /// <summary>
-/// Resize baseline (spec Task 3) plus fine-frequency output sharpening with the dark/light
-/// asymmetric split (spec Task 4). Medium band, edge/noise protection and halo limiting are later tasks.
+/// Resize baseline (spec Task 3) plus fine + medium output sharpening with the dark/light
+/// asymmetric split (spec Tasks 4-5). Edge/noise protection and halo limiting are later tasks.
 /// </summary>
 public static class SharpenCommand
 {
@@ -19,6 +19,8 @@ public static class SharpenCommand
         var allowUpscaleOption = new Option<bool>("--allow-upscale");
         var fineRadiusOption = new Option<double>("--fine-radius") { DefaultValueFactory = _ => 0.6 };
         var fineAmountOption = new Option<double>("--fine-amount") { DefaultValueFactory = _ => 0.0 };
+        var mediumRadiusOption = new Option<double>("--medium-radius") { DefaultValueFactory = _ => 1.4 };
+        var mediumAmountOption = new Option<double>("--medium-amount") { DefaultValueFactory = _ => 0.0 };
         var darkenOption = new Option<double>("--darken") { DefaultValueFactory = _ => 0.8 };
         var lightenOption = new Option<double>("--lighten") { DefaultValueFactory = _ => 0.5 };
 
@@ -30,6 +32,8 @@ public static class SharpenCommand
         command.Add(allowUpscaleOption);
         command.Add(fineRadiusOption);
         command.Add(fineAmountOption);
+        command.Add(mediumRadiusOption);
+        command.Add(mediumAmountOption);
         command.Add(darkenOption);
         command.Add(lightenOption);
 
@@ -42,6 +46,8 @@ public static class SharpenCommand
             var allowUpscale = parseResult.GetValue(allowUpscaleOption);
             var fineRadius = parseResult.GetValue(fineRadiusOption);
             var fineAmount = parseResult.GetValue(fineAmountOption);
+            var mediumRadius = parseResult.GetValue(mediumRadiusOption);
+            var mediumAmount = parseResult.GetValue(mediumAmountOption);
             var darken = parseResult.GetValue(darkenOption);
             var lighten = parseResult.GetValue(lightenOption);
 
@@ -57,9 +63,10 @@ public static class SharpenCommand
                 return (int)ExitCode.InvalidOptions;
             }
 
-            if (fineRadius <= 0 || fineAmount < 0 || darken < 0 || lighten < 0)
+            if (fineRadius <= 0 || mediumRadius <= 0 || fineAmount < 0 || mediumAmount < 0 || darken < 0 || lighten < 0)
             {
-                Console.Error.WriteLine("--fine-radius must be positive; --fine-amount/--darken/--lighten must not be negative.");
+                Console.Error.WriteLine(
+                    "--fine-radius/--medium-radius must be positive; --fine-amount/--medium-amount/--darken/--lighten must not be negative.");
                 return (int)ExitCode.InvalidOptions;
             }
 
@@ -70,12 +77,22 @@ public static class SharpenCommand
                 LongEdge = longEdge,
                 AllowUpscale = allowUpscale,
                 Quality = quality,
-                FineSharpen = new FineSharpenOptions
+                OutputSharpen = new OutputSharpenOptions
                 {
-                    Radius = fineRadius,
-                    Amount = fineAmount,
-                    DarkAmount = darken,
-                    LightAmount = lighten,
+                    Fine = new BandSharpenOptions
+                    {
+                        Radius = fineRadius,
+                        Amount = fineAmount,
+                        DarkAmount = darken,
+                        LightAmount = lighten,
+                    },
+                    Medium = new BandSharpenOptions
+                    {
+                        Radius = mediumRadius,
+                        Amount = mediumAmount,
+                        DarkAmount = darken,
+                        LightAmount = lighten,
+                    },
                 },
             };
 

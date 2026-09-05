@@ -2,10 +2,7 @@ using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Core;
 
-/// <summary>
-/// Options for a single-image processing run. Phase 0 only supports the resize baseline —
-/// no sharpening fields yet (see docs/AcuLume_IMPLEMENTATION_REQUIREMENTS.md Task 3/4).
-/// </summary>
+/// <summary>Options for a single-image processing run.</summary>
 public sealed record ProcessingOptions
 {
     /// <summary>Target long-edge size in pixels. Null means no resize.</summary>
@@ -16,6 +13,6 @@ public sealed record ProcessingOptions
     /// <summary>JPEG quality (1-100). Ignored for lossless formats.</summary>
     public int Quality { get; init; } = 90;
 
-    /// <summary>Fine-frequency output sharpening, applied after resize (spec section 23). Disabled by default.</summary>
-    public FineSharpenOptions FineSharpen { get; init; } = new();
+    /// <summary>Output sharpening (fine + medium bands), applied after resize. Disabled by default.</summary>
+    public OutputSharpenOptions OutputSharpen { get; init; } = new();
 }

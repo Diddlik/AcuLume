@@ -38,9 +38,9 @@ public sealed class AcuLumeProcessor
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        if (options.FineSharpen.IsEnabled)
+        if (options.OutputSharpen.IsEnabled)
         {
-            processed = Sharpen(inputPath, processed, options.FineSharpen);
+            processed = Sharpen(inputPath, processed, options.OutputSharpen);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -88,11 +88,11 @@ public sealed class AcuLumeProcessor
         }
     }
 
-    private static NetVips.Image Sharpen(string inputPath, NetVips.Image image, FineSharpenOptions options)
+    private static NetVips.Image Sharpen(string inputPath, NetVips.Image image, OutputSharpenOptions options)
     {
         try
         {
-            return FineOutputSharpenStage.Apply(image, options);
+            return OutputSharpenStage.Apply(image, options);
         }
         catch (Exception ex)
         {

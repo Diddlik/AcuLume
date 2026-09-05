@@ -1,12 +1,12 @@
 namespace AcuLume.Core.Sharpening;
 
 /// <summary>
-/// Fine-frequency output sharpening settings (spec section 15.1 / 17). Amount of 0 disables the stage.
+/// Settings for a single frequency band (fine or medium — spec section 15/17). Amount of 0 disables the band.
 /// </summary>
-public sealed record FineSharpenOptions
+public sealed record BandSharpenOptions
 {
     /// <summary>Gaussian sigma (px) used for the high-pass extraction.</summary>
-    public double Radius { get; init; } = 0.6;
+    public required double Radius { get; init; }
 
     /// <summary>Overall strength multiplier applied after the dark/light split.</summary>
     public double Amount { get; init; }
@@ -23,12 +23,12 @@ public sealed record FineSharpenOptions
     {
         if (Radius <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(Radius), "Fine radius must be positive.");
+            throw new ArgumentOutOfRangeException(nameof(Radius), "Radius must be positive.");
         }
 
         if (Amount < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(Amount), "Fine amount must not be negative.");
+            throw new ArgumentOutOfRangeException(nameof(Amount), "Amount must not be negative.");
         }
 
         if (DarkAmount < 0)
