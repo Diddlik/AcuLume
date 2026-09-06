@@ -3,10 +3,9 @@ using System.Text.Json.Serialization;
 namespace AcuLume.Core.Configuration;
 
 /// <summary>
-/// JSON-serializable preset schema (spec sections 24, 31-32). Deliberately smaller than the
-/// spec's illustrative full schema: capture sharpening isn't implemented yet (Phase 4), so it is
-/// left out rather than added as an unused, speculative field. Extend it once capture sharpening
-/// actually exists.
+/// JSON-serializable preset schema (spec sections 24, 31-32). Deliberately smaller than the spec's
+/// illustrative full schema: the granular protection thresholds stay CLI-only calibration knobs.
+/// `captureSharpen` is optional, so files written before it existed still validate unchanged.
 /// </summary>
 public sealed record SharpenPreset
 {
@@ -23,6 +22,8 @@ public sealed record SharpenPreset
 
     public ResizePresetOptions? Resize { get; init; }
 
+    public CaptureSharpenPresetOptions? CaptureSharpen { get; init; }
+
     public OutputSharpenPresetOptions? OutputSharpen { get; init; }
 
     public OutputPresetOptions? Output { get; init; }
@@ -35,6 +36,19 @@ public sealed record ResizePresetOptions
     public int? LongEdge { get; init; }
 
     public bool AllowUpscale { get; init; }
+}
+
+public sealed record CaptureSharpenPresetOptions
+{
+    /// <summary>"off", "low" or "normal" (spec section 21).</summary>
+    public string Level { get; init; } = "off";
+
+    /// <summary>"fineRestore" or "richardsonLucy".</summary>
+    public string Engine { get; init; } = "fineRestore";
+
+    public double Radius { get; init; } = 0.8;
+
+    public int Iterations { get; init; } = 4;
 }
 
 public sealed record BandPresetOptions

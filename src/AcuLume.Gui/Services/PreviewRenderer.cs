@@ -33,6 +33,9 @@ public sealed class PreviewRenderer : IDisposable
     private string? _sourcePath;
     private Image? _source;
 
+    private CaptureSharpenOptions? _capturedWith;
+    private Image? _captured;
+
     private int? _resizedLongEdge;
     private Image? _resized;
     private Bitmap? _beforeBitmap;
@@ -55,6 +58,9 @@ public sealed class PreviewRenderer : IDisposable
         var started = System.Diagnostics.Stopwatch.StartNew();
 
         EnsureSource(path);
+        ct.ThrowIfCancellationRequested();
+
+        EnsureCaptured(options.CaptureSharpen);
         ct.ThrowIfCancellationRequested();
 
         EnsureResized(options.LongEdge, options.AllowUpscale);
@@ -88,10 +94,34 @@ public sealed class PreviewRenderer : IDisposable
             return;
         }
 
+        InvalidateCapture();
         _source?.Dispose();
         _source = ImageLoader.LoadForProcessing(path, Enums.Access.Random);
         _sourcePath = path;
-        InvalidateResize();
+    }
+
+    /// <summary>
+    /// Capture sharpening runs before the resize, so it is cached separately from it: changing an
+    /// output slider must not re-run it, and changing it must invalidate the resize below.
+    /// </summary>
+    private void EnsureCaptured(CaptureSharpenOptions options)
+    {
+        if (_captured is not null && _capturedWith == options)
+        {
+            return;
+        }
+
+        InvalidateCapture();
+
+        var source = _source!;
+        var captured = CaptureSharpenStage.Apply(source, options);
+        _captured = ReferenceEquals(captured, source) ? source : captured.CopyMemory();
+        if (!ReferenceEquals(captured, source) && !ReferenceEquals(captured, _captured))
+        {
+            captured.Dispose();
+        }
+
+        _capturedWith = options;
     }
 
     private void EnsureResized(int? longEdge, bool allowUpscale)
@@ -103,7 +133,7 @@ public sealed class PreviewRenderer : IDisposable
 
         InvalidateResize();
 
-        var source = _source!;
+        var source = _captured!;
         var resized = longEdge is { } edge ? ResizeEngine.ResizeToLongEdge(source, edge, allowUpscale) : source;
 
         // Materialise once so repeated sharpen passes don't re-run the Lanczos resize per slider move.
@@ -117,9 +147,21 @@ public sealed class PreviewRenderer : IDisposable
         _beforeBitmap = ToBitmap(_resized);
     }
 
+    private void InvalidateCapture()
+    {
+        if (_captured is not null && !ReferenceEquals(_captured, _source))
+        {
+            _captured.Dispose();
+        }
+
+        _captured = null;
+        _capturedWith = null;
+        InvalidateResize();
+    }
+
     private void InvalidateResize()
     {
-        if (_resized is not null && !ReferenceEquals(_resized, _source))
+        if (_resized is not null && !ReferenceEquals(_resized, _source) && !ReferenceEquals(_resized, _captured))
         {
             _resized.Dispose();
         }
@@ -188,7 +230,7 @@ public sealed class PreviewRenderer : IDisposable
 
     public void Dispose()
     {
-        InvalidateResize();
+        InvalidateCapture();
         _source?.Dispose();
         _source = null;
         _gate.Dispose();

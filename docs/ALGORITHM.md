@@ -99,10 +99,10 @@ Implementation: `AcuLume.Core.Sharpening.HaloLimiter`, `HaloLimiterOptions`, sha
 Presets (`AcuLume.Core.Configuration.SharpenPreset`/`PresetLoader`/`PresetValidator`) are
 versioned JSON, embedded into `AcuLume.Core` from the repo's top-level `presets/` directory and
 also loadable from an arbitrary file path. The schema is deliberately narrower than the spec's
-illustrative full example: it omits `captureSharpen` since that stage isn't implemented yet
-(Phase 4) — adding an unused, speculative field now would just be dead schema to maintain.
-`noiseProtection`/`edgeProtection`/`haloProtection` are single amount knobs in presets; the more
-granular threshold/softness/window controls remain CLI-override-only for now.
+illustrative full example. `captureSharpen` is an optional object, so files written before it
+existed still validate unchanged. `noiseProtection`/`edgeProtection`/`haloProtection` are single
+amount knobs in presets; the more granular threshold/softness/window controls remain
+CLI-override-only, as calibration knobs rather than everyday controls.
 
 `aculume compare` (`AcuLume.Core.Comparison.ComparisonSetBuilder`) generates the variants spec
 section 43 asks for: `original` (byte-identical copy), `resize-only`, a naive per-channel

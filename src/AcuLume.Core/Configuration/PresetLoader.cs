@@ -51,6 +51,20 @@ public static class PresetLoader
             options = options with { LongEdge = resize.LongEdge, AllowUpscale = resize.AllowUpscale };
         }
 
+        if (preset.CaptureSharpen is { } capture)
+        {
+            options = options with
+            {
+                CaptureSharpen = new CaptureSharpenOptions
+                {
+                    Level = ParseLevel(capture.Level),
+                    Engine = ParseEngine(capture.Engine),
+                    Radius = capture.Radius,
+                    Iterations = capture.Iterations,
+                },
+            };
+        }
+
         if (preset.OutputSharpen is { } sharpen)
         {
             options = options with
@@ -73,6 +87,13 @@ public static class PresetLoader
 
         return options;
     }
+
+    // PresetValidator has already rejected anything unparseable by the time this runs.
+    private static CaptureSharpenLevel ParseLevel(string value) =>
+        Enum.Parse<CaptureSharpenLevel>(value, ignoreCase: true);
+
+    private static CaptureSharpenEngine ParseEngine(string value) =>
+        Enum.Parse<CaptureSharpenEngine>(value, ignoreCase: true);
 
     private static BandSharpenOptions? ToBand(BandPresetOptions? band) => band is null
         ? null

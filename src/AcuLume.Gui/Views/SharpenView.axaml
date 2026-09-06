@@ -244,13 +244,70 @@
                              IsChecked="{Binding OutputTarget, Converter={StaticResource EnumMatch}, ConverterParameter=Custom}" />
               </UniformGrid>
             </Border>
-            <Grid ColumnDefinitions="62,Auto,*" Margin="0,0,0,20">
+            <Grid ColumnDefinitions="62,Auto,*" ColumnSpacing="10" Margin="0,0,0,12">
               <TextBlock Grid.Column="0" Classes="label" Text="Long edge" FontSize="11.5" VerticalAlignment="Center" />
               <TextBox Grid.Column="1" Classes="mono" Width="86"
                        Text="{Binding LongEdge}" />
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                <CheckBox Classes="compact" IsChecked="{Binding AllowUpscale}" VerticalAlignment="Center" />
+                <TextBlock Text="Upscale" FontSize="11.5" VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondary}" />
+              </StackPanel>
             </Grid>
 
             <Border Classes="divider" Margin="0,0,0,16" />
+
+            <!-- capture sharpening: runs before the resize (spec section 21) -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+              <TextBlock Grid.Column="0" Text="Capture Sharpening" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" Classes="hint" Text="before resize" VerticalAlignment="Center" />
+            </Grid>
+            <Border Classes="segments" Margin="0,0,0,10">
+              <UniformGrid Columns="3">
+                <RadioButton Classes="segment" Content="Off" GroupName="Capture"
+                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                             IsChecked="{Binding CaptureLevel, Converter={StaticResource EnumMatch}, ConverterParameter=Off}" />
+                <RadioButton Classes="segment" Content="Low" GroupName="Capture"
+                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                             IsChecked="{Binding CaptureLevel, Converter={StaticResource EnumMatch}, ConverterParameter=Low}" />
+                <RadioButton Classes="segment" Content="Normal" GroupName="Capture"
+                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                             IsChecked="{Binding CaptureLevel, Converter={StaticResource EnumMatch}, ConverterParameter=Normal}" />
+              </UniformGrid>
+            </Border>
+
+            <StackPanel IsVisible="{Binding IsCaptureEnabled}" Margin="0,0,0,4">
+              <Border Classes="segments" Margin="0,0,0,10">
+                <UniformGrid Columns="2">
+                  <RadioButton Classes="segment" Content="Fine restore" GroupName="CaptureEngine"
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               IsChecked="{Binding CaptureEngine, Converter={StaticResource EnumMatch}, ConverterParameter=FineRestore}" />
+                  <RadioButton Classes="segment" Content="Richardson-Lucy" GroupName="CaptureEngine"
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               IsChecked="{Binding CaptureEngine, Converter={StaticResource EnumMatch}, ConverterParameter=RichardsonLucy}" />
+                </UniformGrid>
+              </Border>
+
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,6">
+                <TextBlock Grid.Column="0" Text="Assumed blur" Foreground="{DynamicResource TextSecondary}" />
+                <TextBlock Grid.Column="1" Classes="mono"
+                           Text="{Binding CaptureRadius, StringFormat='{}{0:0.00} px'}" />
+              </Grid>
+              <Slider Minimum="0.35" Maximum="2.5" Value="{Binding CaptureRadius}" />
+
+              <StackPanel IsVisible="{Binding IsRichardsonLucy}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,8,0,6">
+                  <TextBlock Grid.Column="0" Text="Iterations" Foreground="{DynamicResource TextSecondary}" />
+                  <TextBlock Grid.Column="1" Classes="mono" Text="{Binding CaptureIterations}" />
+                </Grid>
+                <Slider Minimum="1" Maximum="12" TickFrequency="1" IsSnapToTickEnabled="True"
+                        Value="{Binding CaptureIterations}" />
+              </StackPanel>
+
+              <TextBlock Classes="hint" Margin="0,6,0,0" Text="{Binding CaptureHint}" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Classes="divider" Margin="0,16,0,16" />
 
             <!-- sharpening -->
             <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">

@@ -1,3 +1,5 @@
+using AcuLume.Core.Sharpening;
+
 namespace AcuLume.Core.Configuration;
 
 /// <summary>
@@ -23,6 +25,29 @@ public static class PresetValidator
         if (preset.Resize is { } resize && resize.LongEdge is { } longEdge && longEdge <= 0)
         {
             throw Invalid(preset, "resize.longEdge must be positive.");
+        }
+
+        if (preset.CaptureSharpen is { } capture)
+        {
+            if (!Enum.TryParse<CaptureSharpenLevel>(capture.Level, ignoreCase: true, out _))
+            {
+                throw Invalid(preset, $"captureSharpen.level must be off, low or normal (was '{capture.Level}').");
+            }
+
+            if (!Enum.TryParse<CaptureSharpenEngine>(capture.Engine, ignoreCase: true, out _))
+            {
+                throw Invalid(preset, $"captureSharpen.engine must be fineRestore or richardsonLucy (was '{capture.Engine}').");
+            }
+
+            if (capture.Radius < BandSharpenOptions.MinimumRadius)
+            {
+                throw Invalid(preset, $"captureSharpen.radius must be at least {BandSharpenOptions.MinimumRadius}.");
+            }
+
+            if (capture.Iterations is < 1 or > 20)
+            {
+                throw Invalid(preset, "captureSharpen.iterations must be between 1 and 20.");
+            }
         }
 
         if (preset.OutputSharpen is { } outputSharpen)

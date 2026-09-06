@@ -235,6 +235,37 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
     public ObservableCollection<RecentImage> Recent { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsCaptureEnabled))]
+    [NotifyPropertyChangedFor(nameof(CaptureHint))]
+    public partial CaptureSharpenLevel CaptureLevel { get; set; } = CaptureSharpenLevel.Off;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRichardsonLucy))]
+    [NotifyPropertyChangedFor(nameof(CaptureHint))]
+    public partial CaptureSharpenEngine CaptureEngine { get; set; } = CaptureSharpenEngine.FineRestore;
+
+    public bool IsCaptureEnabled => CaptureLevel != CaptureSharpenLevel.Off;
+
+    public bool IsRichardsonLucy => CaptureEngine == CaptureSharpenEngine.RichardsonLucy;
+
+    /// <summary>
+    /// Capture sharpening measured worse than simply raising the output amounts (see
+    /// docs/ALGORITHM.md). The panel says so rather than presenting it as a free improvement.
+    /// </summary>
+    public string CaptureHint => IsRichardsonLucy
+        ? "Experimental deconvolution against an assumed Gaussian blur. Slow, and it needs a PSF a processed JPEG cannot supply — measured worse than simply raising the output amounts."
+        : "Restores fine detail before the resize. Measured worse per unit of sharpening than raising the output amounts; off is the calibrated default.";
+
+    [ObservableProperty]
+    public partial double CaptureRadius { get; set; } = 0.8;
+
+    [ObservableProperty]
+    public partial int CaptureIterations { get; set; } = 4;
+
+    [ObservableProperty]
+    public partial bool AllowUpscale { get; set; }
+
+    [ObservableProperty]
     public partial string? SelectedPreset { get; set; }
 
     partial void OnSelectedPresetChanged(string? value)
@@ -377,8 +408,15 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
     public ProcessingOptions BuildOptions() => new()
     {
         LongEdge = LongEdge,
-        AllowUpscale = false,
+        AllowUpscale = AllowUpscale,
         Quality = Quality,
+        CaptureSharpen = new CaptureSharpenOptions
+        {
+            Level = CaptureLevel,
+            Engine = CaptureEngine,
+            Radius = CaptureRadius,
+            Iterations = CaptureIterations,
+        },
         OutputSharpen = new OutputSharpenOptions
         {
             Fine = new BandSharpenOptions
@@ -420,7 +458,20 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
         Version = 1,
         Name = name,
         Description = description,
-        Resize = new ResizePresetOptions { Enabled = true, LongEdge = LongEdge, AllowUpscale = false },
+        // "Full Resolution" means no resize at all. Writing the current image's long edge would
+        // bake this photograph's dimensions into a preset meant to be reusable.
+        Resize = OutputTarget == OutputTarget.Full
+            ? new ResizePresetOptions { Enabled = false }
+            : new ResizePresetOptions { Enabled = true, LongEdge = LongEdge, AllowUpscale = AllowUpscale },
+        CaptureSharpen = CaptureLevel == CaptureSharpenLevel.Off
+            ? null
+            : new CaptureSharpenPresetOptions
+            {
+                Level = CaptureLevel.ToString(),
+                Engine = CaptureEngine.ToString(),
+                Radius = CaptureRadius,
+                Iterations = CaptureIterations,
+            },
         OutputSharpen = new OutputSharpenPresetOptions
         {
             Fine = new BandPresetOptions
@@ -476,7 +527,14 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
             HaloProtectionAmount = sharpen.HaloLimiter.Amount;
             HaloProtectionEnabled = sharpen.HaloLimiter.IsEnabled;
 
+            var capture = options.CaptureSharpen;
+            CaptureLevel = capture.Level;
+            CaptureEngine = capture.Engine;
+            CaptureRadius = capture.Radius;
+            CaptureIterations = capture.Iterations;
+
             Quality = options.Quality;
+            AllowUpscale = options.AllowUpscale;
 
             if (options.LongEdge is { } edge)
             {
@@ -516,7 +574,10 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
         nameof(DarkDetail) or nameof(LightDetail) or
         nameof(NoiseProtectionEnabled) or nameof(NoiseProtectionAmount) or
         nameof(EdgeProtectionEnabled) or nameof(EdgeProtectionAmount) or
-        nameof(HaloProtectionEnabled) or nameof(HaloProtectionAmount);
+        nameof(HaloProtectionEnabled) or nameof(HaloProtectionAmount) or
+        nameof(AllowUpscale) or
+        nameof(CaptureLevel) or nameof(CaptureEngine) or
+        nameof(CaptureRadius) or nameof(CaptureIterations);
 
     private void SchedulePreview()
     {
