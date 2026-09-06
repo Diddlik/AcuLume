@@ -30,7 +30,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         Batch = new BatchViewModel(_library);
         Compare = new CompareViewModel(Sharpen, _library);
         ImageInfo = new ImageInfoViewModel(Sharpen);
-        Settings = new SettingsViewModel(_library);
+        Settings = new SettingsViewModel(_library, new UpdateService());
 
         Sharpen.PropertyChanged += (_, e) =>
         {

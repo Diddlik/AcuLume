@@ -58,7 +58,17 @@ dotnet run --project src/AcuLume.Gui              # open empty
 dotnet run --project src/AcuLume.Gui -- photo.jpg # open an image straight away
 ```
 
-## Requirements
+## Install
+
+Grab `AcuLume-win-Setup.exe` from the [latest release](https://github.com/Diddlik/AcuLume/releases)
+and run it — the build is self-contained, so nothing else needs to be installed. `AcuLume-win-Portable.zip`
+is the same build as an unpack-and-run folder. Both carry the GUI and the `aculume` CLI.
+
+An installed copy updates itself from GitHub: **Settings → Updates → Check for updates**. Nothing is
+checked or downloaded unless you press the button, and this is the only time the app touches the
+network at all.
+
+## Build from source
 
 - .NET 10 SDK (pinned in `global.json`)
 - Nothing else — libvips ships with the `NetVips.Native` packages
@@ -67,6 +77,16 @@ dotnet run --project src/AcuLume.Gui -- photo.jpg # open an image straight away
 dotnet build
 dotnet test
 ```
+
+To produce a release locally (installer, portable zip and update feed in `build/releases`):
+
+```powershell
+dotnet tool restore
+./build/publish-windows.ps1 -Version 0.2.0
+```
+
+Pushing a `v*` tag runs the same script in CI and publishes the artifacts to a GitHub release. The
+version has to match the tag, because that is what the in-app updater compares against.
 
 ## The CLI
 
@@ -180,4 +200,6 @@ Phase 1 of the specification is complete — the full adaptive multi-frequency p
   turning the output stage up to the same acutance, both cost more halo, and Richardson-Lucy costs
   ~9x the processing time. Deconvolution needs a PSF that a demosaiced, already-sharpened JPEG cannot
   supply, so Wiener was not built for the same reason.
-- **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.
+- **Phase 5 — distribution.** Windows x64 done: self-contained publish, Velopack installer and
+  portable zip, and in-app updates from GitHub releases. Linux x64 packaging is still open, as is
+  code signing — installers are currently unsigned, so Windows SmartScreen will warn on first run.

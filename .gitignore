@@ -9,3 +9,7 @@ obj/
 
 # Local test photos, not part of the repository
 /samples/
+
+# Velopack publish output
+/build/stage/
+/build/releases/

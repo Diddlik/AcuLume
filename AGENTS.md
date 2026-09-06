@@ -70,7 +70,11 @@ If any `[TO FILL]` entry remains, complete this onboarding before implementing t
 - Important entry points: `src/AcuLume.Cli/CliApp.cs` (CLI), `src/AcuLume.Gui/Program.cs` (GUI; optional first argument opens an image), `src/AcuLume.Core/AcuLumeProcessor.cs` (file-to-file pipeline used by both).
 - Build command: `dotnet build`.
 - Test command: `dotnet test` (xUnit).
-- Lint and format command: none configured; `dotnet format` works.
+- Lint and format command: `dotnet format`; CI gates it with `dotnet format --verify-no-changes`.
+- Release command: `dotnet tool restore` then `./build/publish-windows.ps1 -Version <x.y.z>`, which
+  publishes GUI and CLI self-contained into one folder and packs a Velopack installer, portable zip
+  and update feed into `build/releases`. Pushing a `v*` tag runs the same script in CI and uploads to
+  a GitHub release. The version must match the tag — the in-app updater compares against it.
 - Local run command: `dotnet run --project src/AcuLume.Cli -- info <image>`; GUI: `dotnet run --project src/AcuLume.Gui [image]`.
 - Required environment: .NET 10 SDK; NetVips + libvips native binaries (via NetVips.Native.* packages, ~8.18.x); dev target is Windows 11 x64 first, Linux x64 second (per spec §47 Phase 5).
 - Architecture constraints: `AcuLume.Core` must not reference `AcuLume.Cli` or `AcuLume.Gui` — both are thin adapters. The GUI must not reimplement pipeline maths: it composes `AcuLume.Core` stages (`CaptureSharpenStage`, `ResizeEngine`, `OutputSharpenStage`) so the interactive preview and an export agree — a stage added to `AcuLumeProcessor` must be added to `PreviewRenderer` in the same change, or the preview silently stops matching the export. GUI previews render at the *output* resolution, because sharpening is output-size dependent. Processing must be deterministic (no randomness) for identical input+preset+version. Internal sharpening math uses float precision, luminance/detail-based (not independent RGB channel sharpening). No per-pixel managed C# loops in the main pipeline — compose via NetVips/libvips ops. Never overwrite source files by default. No telemetry, no image upload, no external API/cloud calls. Presets are versioned JSON (System.Text.Json) with strict validation (reject malformed values, no silent clamping). Do not hard-code the `1800`px web target inside Core algorithm logic — output-size must be passed as context.
@@ -97,6 +101,12 @@ every failure path falls back to the untransformed image. ~1 ms per 1200x1800 fr
 cached. This is display-only — exported files keep their own pixels and their own profile and must
 never be converted into a monitor profile. Per-monitor handling and Linux (X11 `_ICC_PROFILE` /
 colord) are not implemented.
+
+Updates: `VelopackApp.Build().Run()` must stay the first statement in `Program.Main` — install,
+update and uninstall hooks are delivered as process arguments, and the app has to service them before
+a window exists. `UpdateService` only acts when the user presses a button; there is no background
+polling, and an update check is the only network request the application makes. Velopack manages an
+*installed* copy, so from a build tree `IsInstalled` is false and the UI says so.
 
 GUI layout constraint: never nest a `ListBox` (or any control with its own `ScrollViewer`) inside a page `ScrollViewer` that gives it unbounded height — layout recurses until the process dies with no managed exception and no event-log entry. Use an `ItemsControl` and put selection state on the item view model instead.
 
