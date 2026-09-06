@@ -164,8 +164,7 @@ Phase 1 of the specification is complete — the full adaptive multi-frequency p
 
 - **Phase 2 — calibration.** First pass done: the web presets now match a naive unsharp mask's
   acutance while overshooting less (numbers in [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). Still open —
-  a wider photo corpus, `full-natural` at print resolution, and dropping the `experimental` flag from
-  `web-1800-crisp`.
+  a wider photo corpus and dropping the `experimental` flag from `web-1800-crisp`.
 - **Phase 3 — resize research.** Single vs. staged downscaling, gamma vs. linear-light.
 - **Phase 4 — advanced restoration.** Wiener / Richardson-Lucy as optional capture sharpening.
 - **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.

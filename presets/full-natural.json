@@ -8,13 +8,13 @@
   "outputSharpen": {
     "fine": {
       "radius": 0.60,
-      "amount": 0.50,
+      "amount": 1.00,
       "darkAmount": 0.80,
       "lightAmount": 0.60
     },
     "medium": {
       "radius": 1.40,
-      "amount": 0.15,
+      "amount": 0.30,
       "darkAmount": 0.75,
       "lightAmount": 0.55
     },

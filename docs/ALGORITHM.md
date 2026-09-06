@@ -129,8 +129,15 @@ as a halo proxy:
 `web-1800-natural` therefore lands at roughly the naive baseline's acutance while overshooting
 noticeably less — which is the entire claim the pipeline has to make. The amounts that produce this
 are ~5x the ones the presets shipped with before the sub-pixel radius fix, when only the medium band
-was actually running. `full-natural` has not been calibrated yet: at full resolution it reaches 1.04x
-with its current amounts, and the right target for a print preset still needs visual evaluation.
+was actually running. `full-natural` was calibrated separately, at full resolution against the unsharpened image rather
+than against a downscale: its amounts were doubled to reach 1.11x with a 0.020 halo proxy — the
+lowest overshoot of any candidate — which keeps it "gentle" as a print/archival preset while being
+clearly better than no sharpening at 100%.
+
+Verified across both sample photographs. On fine regular texture (a piqué knit) `web-1800-natural`
+resolves slightly more than the naive baseline (1.41x vs 1.38x) at a lower overshoot, which is the
+fine band doing its job; `web-1800-crisp` renders the same weave as a hard grid, which is one reason
+it stays flagged experimental.
 
 ## Not yet implemented
 
