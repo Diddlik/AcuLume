@@ -1,3 +1,4 @@
+using AcuLume.Core.Configuration;
 using AcuLume.Core.Sharpening;
 using AcuLume.Gui.Services;
 using AcuLume.Gui.ViewModels;
@@ -77,6 +78,30 @@ public class SharpenViewModelTests
         Assert.True(options.CaptureSharpen.IsEnabled);
         Assert.Equal(CaptureSharpenLevel.Low, options.CaptureSharpen.Level);
         Assert.Equal(0.9, options.CaptureSharpen.Radius);
+    }
+
+    /// <summary>
+    /// Regression: a slider coerces a bound value into its own range and writes the coerced value
+    /// back. When the presets were recalibrated upwards the fine amount slider still stopped at 2.0,
+    /// so loading a preset of 6.0 silently became 2.0 and the GUI produced weaker output than the
+    /// CLI for the same preset. Every built-in preset must fit inside what the panel can express.
+    /// </summary>
+    [Theory]
+    [InlineData("web-1800-natural")]
+    [InlineData("web-1800-crisp")]
+    [InlineData("full-natural")]
+    [InlineData("neutral")]
+    public void PresetsFitTheSliderRanges(string name)
+    {
+        var preset = PresetLoader.Load(name);
+        var options = PresetLoader.ToProcessingOptions(preset).OutputSharpen;
+
+        Assert.InRange(options.Fine.Amount, 0, SharpenViewModel.MaxBandAmount);
+        Assert.InRange(options.Medium.Amount, 0, SharpenViewModel.MaxBandAmount);
+        Assert.InRange(options.Fine.Radius, BandSharpenOptions.MinimumRadius, SharpenViewModel.MaxBandRadius);
+        Assert.InRange(options.Medium.Radius, BandSharpenOptions.MinimumRadius, SharpenViewModel.MaxBandRadius);
+        Assert.InRange(options.Fine.DarkAmount, 0, SharpenViewModel.MaxDetailWeight);
+        Assert.InRange(options.Fine.LightAmount, 0, SharpenViewModel.MaxDetailWeight);
     }
 
     private static SharpenViewModel NewViewModel() => new(new PresetLibrary(), new RecentImages());

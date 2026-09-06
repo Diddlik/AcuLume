@@ -271,6 +271,30 @@
     <Setter Property="Stroke" Value="#0A0B0C" />
   </Style>
 
+  <!-- ===== help disclosure ===== -->
+  <Style Selector="ToggleButton.helpToggle">
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Name="bg" CornerRadius="4" Padding="7,3" Background="Transparent"
+                BorderBrush="{DynamicResource ControlBorder}" BorderThickness="1">
+          <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="ToggleButton.helpToggle:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+  </Style>
+  <Style Selector="ToggleButton.helpToggle:checked">
+    <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+  </Style>
+  <Style Selector="ToggleButton.helpToggle:checked /template/ Border#bg">
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+  </Style>
+
   <!-- ===== ComboBox ===== -->
 
   <Style Selector="ComboBox.flat">

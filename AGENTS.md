@@ -112,6 +112,16 @@ a window exists. `UpdateService` only acts when the user presses a button; there
 polling, and an update check is the only network request the application makes. Velopack manages an
 *installed* copy, so from a build tree `IsInstalled` is false and the UI says so.
 
+GUI help strips: each Sharpen section can expand a before/after pair rendered from the real engine by
+`build/generate-help-images.ps1` (source photographs are not in the repository; the generated PNGs
+are). Most settings move a 150 px crop by only one to three levels out of 255 at their calibrated
+values, so those pairs are rendered past the preset and say so in the panel — `medium` and `edge` are
+strong enough to be shown at their real values, and that split must stay in sync between the script
+and `HelpTopic.IsExaggerated`. The script warns when a pair falls below 0.5/255 so a recalibration
+cannot quietly leave two identical images behind. `avares:` addresses resources by *assembly name*
+(`aculume-gui`), not namespace, and linking files in from outside the project gives them no avares
+path at all — GUI-only assets therefore live under `src/AcuLume.Gui/Assets/`.
+
 GUI layout constraint: never nest a `ListBox` (or any control with its own `ScrollViewer`) inside a page `ScrollViewer` that gives it unbounded height — layout recurses until the process dies with no managed exception and no event-log entry. Use an `ItemsControl` and put selection state on the item view model instead.
 
 ## Definition of done

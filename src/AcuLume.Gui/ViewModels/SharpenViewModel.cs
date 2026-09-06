@@ -268,6 +268,54 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial string? SelectedPreset { get; set; }
 
+    /// <summary>
+    /// Slider bounds live here rather than in the XAML because a slider silently coerces a bound
+    /// value into its range: when the presets were recalibrated upwards, the panel clamped a fine
+    /// amount of 6.0 down to its old maximum of 2.0 and wrote that back, so the GUI quietly produced
+    /// weaker output than the CLI for the same preset. `PresetsFitTheSliderRanges` guards it.
+    /// </summary>
+    public static double MaxBandAmount => 12.0;
+
+    public static double MaxBandRadius => 4.0;
+
+    public static double MaxDetailWeight => 2.0;
+
+    public static double MaxOverall => 2.0;
+
+    /// <summary>
+    /// One expandable before/after strip per section of the panel. Two of these are shown at their
+    /// real preset value; the rest had to be exaggerated to be visible at all, which each one says.
+    /// </summary>
+    public HelpTopic CaptureHelp { get; } = new(
+        "capture",
+        "Restores detail at full resolution, before the resize. Most of what it recovers sits above the output's resolution and is thrown away by the downscale, which is why it is off by default.");
+
+    public HelpTopic FineHelp { get; } = new(
+        "fine",
+        "The finest band: pore, thread and hair scale. It carries most of the crispness — and most of the risk of amplifying grain.");
+
+    public HelpTopic MediumHelp { get; } = new(
+        "medium",
+        "The coarser band: shapes and structure rather than texture. It adds solidity without the crunchy edge of a single strong radius.",
+        exaggerated: false);
+
+    public HelpTopic BalanceHelp { get; } = new(
+        "balance",
+        "Scales the darkening and lightening halves of the detail separately. Bright halos are the ones the eye catches, so light detail is held below dark.");
+
+    public HelpTopic NoiseHelp { get; } = new(
+        "noise",
+        "Suppresses detail below the grain floor instead of amplifying it. At full strength almost no noise survives into the output.");
+
+    public HelpTopic EdgeHelp { get; } = new(
+        "edge",
+        "Attenuates sharpening along strong edges, where halos appear first.",
+        exaggerated: false);
+
+    public HelpTopic HaloHelp { get; } = new(
+        "halo",
+        "Caps overshoot at a fraction of the local contrast range. At the preset's limits the band contribution rarely reaches them, so it seldom engages; this pair uses much tighter limits.");
+
     partial void OnSelectedPresetChanged(string? value)
     {
         if (value is not null)

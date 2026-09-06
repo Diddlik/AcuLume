@@ -26,6 +26,8 @@
   <ItemGroup>
     <!-- Linked so the window icon and the executable icon come from one shared source. -->
     <AvaloniaResource Include="..\..\assets\aculume-256.png" Link="Assets\aculume-256.png" />
+    <!-- GUI-only illustrations; linking them from outside the project does not give them an avares path. -->
+    <AvaloniaResource Include="Assets\help\*.png" />
   </ItemGroup>
 
   <ItemGroup>

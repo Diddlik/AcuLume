@@ -4,6 +4,36 @@
              x:Class="AcuLume.Gui.Views.SharpenView"
              x:DataType="vm:SharpenViewModel">
 
+  <UserControl.Resources>
+    <DataTemplate x:Key="HelpStrip" DataType="vm:HelpTopic">
+      <StackPanel Margin="0,6,0,0">
+        <ToggleButton Classes="helpToggle" IsChecked="{Binding IsExpanded}"
+                      Content="What does this do?" HorizontalAlignment="Left" />
+        <Border IsVisible="{Binding IsExpanded}" Margin="0,8,0,2"
+                Background="{DynamicResource InsetBackground}" CornerRadius="6" Padding="10">
+          <StackPanel Spacing="8">
+            <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap" FontSize="11.5"
+                       Foreground="{DynamicResource TextSecondary}" />
+            <Grid ColumnDefinitions="150,6,150" HorizontalAlignment="Left">
+              <StackPanel Grid.Column="0" Spacing="3">
+                <Image Source="{Binding BeforeImage}" Width="150" Height="150" Stretch="None" />
+                <TextBlock Text="off" FontSize="10.5" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextFaint}" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Spacing="3">
+                <Image Source="{Binding AfterImage}" Width="150" Height="150" Stretch="None" />
+                <TextBlock Text="on" FontSize="10.5" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Accent}" />
+              </StackPanel>
+            </Grid>
+            <TextBlock Text="{Binding Scale}" TextWrapping="Wrap" FontSize="10.5"
+                       Foreground="{DynamicResource TextFaint}" FontStyle="Italic" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.Resources>
+
   <Grid ColumnDefinitions="*,346">
 
     <!-- ================= PREVIEW COLUMN ================= -->
@@ -321,7 +351,7 @@
                 <TextBlock Grid.Column="0" Text="Overall" Foreground="{DynamicResource TextSecondary}" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding Overall, StringFormat='{}{0:0.00}×'}" />
               </Grid>
-              <Slider Minimum="0" Maximum="2" Value="{Binding Overall}" />
+              <Slider Minimum="0" Maximum="{x:Static vm:SharpenViewModel.MaxOverall}" Value="{Binding Overall}" />
             </StackPanel>
 
             <!-- fine band -->
@@ -334,14 +364,16 @@
                 <TextBlock Grid.Column="0" Classes="label" Text="Amount" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding FineAmount, StringFormat='{}{0:0.00}'}" />
               </Grid>
-              <Slider Minimum="0" Maximum="2" Value="{Binding FineAmount}" />
+              <Slider Minimum="0" Maximum="{x:Static vm:SharpenViewModel.MaxBandAmount}" Value="{Binding FineAmount}" />
             </StackPanel>
             <StackPanel Margin="0,0,0,20">
               <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
                 <TextBlock Grid.Column="0" Classes="label" Text="Radius" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding FineRadius, StringFormat='{}{0:0.00} px'}" />
               </Grid>
-              <Slider Minimum="0.2" Maximum="2" Value="{Binding FineRadius}" />
+              <Slider Minimum="0.35" Maximum="{x:Static vm:SharpenViewModel.MaxBandRadius}" Value="{Binding FineRadius}" />
+              <ContentControl Content="{Binding FineHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
             </StackPanel>
 
             <!-- medium band -->
@@ -354,14 +386,16 @@
                 <TextBlock Grid.Column="0" Classes="label" Text="Amount" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding MediumAmount, StringFormat='{}{0:0.00}'}" />
               </Grid>
-              <Slider Minimum="0" Maximum="2" Value="{Binding MediumAmount}" />
+              <Slider Minimum="0" Maximum="{x:Static vm:SharpenViewModel.MaxBandAmount}" Value="{Binding MediumAmount}" />
             </StackPanel>
             <StackPanel Margin="0,0,0,20">
               <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
                 <TextBlock Grid.Column="0" Classes="label" Text="Radius" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding MediumRadius, StringFormat='{}{0:0.00} px'}" />
               </Grid>
-              <Slider Minimum="0.5" Maximum="4" Value="{Binding MediumRadius}" />
+              <Slider Minimum="0.35" Maximum="{x:Static vm:SharpenViewModel.MaxBandRadius}" Value="{Binding MediumRadius}" />
+              <ContentControl Content="{Binding MediumHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
             </StackPanel>
 
             <Border Classes="divider" Margin="0,0,0,16" />
@@ -377,17 +411,19 @@
                 <TextBlock Grid.Column="0" Classes="label" Text="Dark Detail" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding DarkDetail, StringFormat='{}{0:0.00}'}" />
               </Grid>
-              <Slider Minimum="0" Maximum="1.5" Value="{Binding DarkDetail}" />
+              <Slider Minimum="0" Maximum="{x:Static vm:SharpenViewModel.MaxDetailWeight}" Value="{Binding DarkDetail}" />
             </StackPanel>
             <StackPanel Margin="0,0,0,8">
               <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,6">
                 <TextBlock Grid.Column="0" Classes="label" Text="Light Detail" />
                 <TextBlock Grid.Column="1" Classes="mono" Text="{Binding LightDetail, StringFormat='{}{0:0.00}'}" />
               </Grid>
-              <Slider Minimum="0" Maximum="1.5" Value="{Binding LightDetail}" />
+              <Slider Minimum="0" Maximum="{x:Static vm:SharpenViewModel.MaxDetailWeight}" Value="{Binding LightDetail}" />
             </StackPanel>
             <TextBlock Classes="hint" Margin="0,0,0,20"
                        Text="Lower Light Detail to reduce bright halos around high-contrast edges." />
+            <ContentControl Content="{Binding BalanceHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
 
             <Border Classes="divider" Margin="0,0,0,16" />
 
@@ -406,6 +442,8 @@
                       IsEnabled="{Binding NoiseProtectionEnabled}" />
               <TextBlock Classes="hint" Margin="0,5,0,0"
                          Text="Suppresses small detail likely to be sensor noise." />
+              <ContentControl Content="{Binding NoiseHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
             </StackPanel>
 
             <StackPanel Margin="0,0,0,16">
@@ -420,6 +458,8 @@
                       IsEnabled="{Binding EdgeProtectionEnabled}" />
               <TextBlock Classes="hint" Margin="0,5,0,0"
                          Text="Attenuates sharpening near strong edges, where halos are most visible." />
+              <ContentControl Content="{Binding EdgeHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
             </StackPanel>
 
             <StackPanel Margin="0,0,0,4">
@@ -434,6 +474,8 @@
                       IsEnabled="{Binding HaloProtectionEnabled}" />
               <TextBlock Classes="hint" Margin="0,5,0,0"
                          Text="Caps overshoot to a fraction of local contrast instead of clipping." />
+              <ContentControl Content="{Binding HaloHelp}" ContentTemplate="{StaticResource HelpStrip}" />
+
             </StackPanel>
 
           </StackPanel>
