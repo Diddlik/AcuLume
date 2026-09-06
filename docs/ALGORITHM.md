@@ -225,10 +225,70 @@ was not implemented.
 The honest conclusion is that the downscale is not where this pipeline's remaining quality problems
 live.
 
+## Capture sharpening and deconvolution (Phase 4)
+
+`CaptureSharpenStage` sits where the spec's pipeline diagram puts it, between decode and resize, and
+works on the L channel like the output stage. It is off by default and exposed as
+`--capture-sharpen off|low|normal` (spec section 21), with two engines:
+
+- **`FineRestore`** — the spec's conservative starting point: a fine-frequency high-pass added back at
+  a low amount. Reuses `FrequencyBandExtractor` rather than restating the band maths.
+- **`RichardsonLucy`** — deconvolution against an assumed Gaussian PSF, iterating
+  `f <- f * ((g / (f (*) h)) (*) h)`. The PSF is symmetric so its mirror is itself and the correlation
+  is another blur, which makes every iteration expressible as libvips ops with no managed per-pixel
+  loop. The result is blended back by the level's amount, since full deconvolution is precisely the
+  aggressive restoration the spec rules out.
+
+### Result: neither earns a place in the default path
+
+Measured as acutance and envelope overshoot (same metrics as the Phase 2 calibration), the honest
+comparison is not "does capture sharpening do something" but "does it beat simply turning the output
+stage up to the same acutance".
+
+At an 1800 px long edge (10 photographs):
+
+| config | acutance | overshoot | overshoot per unit of gain |
+|---|---|---|---|
+| baseline, no capture | 1.238 | 0.00030 | 0.00128 |
+| capture normal, `FineRestore` | 1.329 | 0.00048 | 0.00145 |
+| capture normal, `RichardsonLucy` | 1.350 | 0.00051 | 0.00147 |
+| output amounts +50% instead | 1.353 | 0.00050 | 0.00142 |
+
+At full resolution, where no downscale throws restored detail away (4 photographs):
+
+| config | acutance | overshoot | overshoot per unit of gain |
+|---|---|---|---|
+| `full-natural` | 1.199 | 0.00014 | 0.00070 |
+| `full-natural` at 1.5x amounts | 1.326 | 0.00024 | 0.00074 |
+| `full-natural` + capture `FineRestore` | 1.727 | 0.00068 | 0.00093 |
+| `full-natural` + capture `RichardsonLucy` | 1.617 | 0.00064 | 0.00103 |
+| `RichardsonLucy` alone, no output sharpening | 1.309 | 0.00028 | 0.00089 |
+
+In both regimes the plain output stage is the most halo-efficient way to reach any given acutance,
+and Richardson-Lucy is the least — at roughly nine times the processing cost (3.7 s versus 0.4 s on a
+24 MP file).
+
+Two reasons, and they are worth recording because they bound what any deconvolution engine can do
+here. For the downscaled case, most of what capture sharpening restores sits above the output's
+Nyquist limit and is discarded by the resize; what survives is ordinary added contrast, which the
+output stage produces more cheaply and more cleanly. For deconvolution specifically, Richardson-Lucy
+only beats a high-pass when the PSF is approximately right — and the input is a demosaiced,
+JPEG-compressed, often already-sharpened file whose true PSF is unknown and no longer Gaussian.
+Deconvolving that with a guessed kernel is not restoration, it is a nonlinear sharpener with extra
+steps.
+
+Wiener deconvolution is therefore not implemented. It is bound by the same unknown PSF that limits
+Richardson-Lucy, so a second engine would fail for the identical reason. Deconvolution becomes worth
+revisiting with RAW input and a measured or estimated PSF, which is out of scope here.
+
+Both engines stay in the tree, off by default, as the spec's separate experimental restoration
+engines — not folded into the stable path.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
-- Capture sharpening, output-size-aware radius scaling, batch command, debug image export.
+- Output-size-aware radius scaling, batch command (the GUI has one), debug image export.
+- Wiener and PSF-estimating deconvolution — see the Phase 4 result above for why.
 
 This completes spec Tasks 1-9 (the full Phase 1 output-sharpening pipeline, presets, and
 comparison tooling). Remaining work is Phase 2 (empirical calibration against a real photo

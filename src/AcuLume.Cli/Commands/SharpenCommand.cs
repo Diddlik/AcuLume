@@ -22,6 +22,10 @@ public static class SharpenCommand
         var outputOption = new Option<FileInfo?>("--output", "-o");
         var qualityOption = new Option<int?>("--quality");
         var allowUpscaleOption = new Option<bool>("--allow-upscale");
+        var captureSharpenOption = new Option<CaptureSharpenLevel?>("--capture-sharpen");
+        var captureEngineOption = new Option<CaptureSharpenEngine?>("--capture-engine");
+        var captureRadiusOption = new Option<double?>("--capture-radius");
+        var captureIterationsOption = new Option<int?>("--capture-iterations");
         var resizeStrategyOption = new Option<ResizeStrategy?>("--resize-strategy");
         var resizeSpaceOption = new Option<ResizeSpace?>("--resize-space");
         var fineRadiusOption = new Option<double?>("--fine-radius");
@@ -49,6 +53,10 @@ public static class SharpenCommand
         command.Add(outputOption);
         command.Add(qualityOption);
         command.Add(allowUpscaleOption);
+        command.Add(captureSharpenOption);
+        command.Add(captureEngineOption);
+        command.Add(captureRadiusOption);
+        command.Add(captureIterationsOption);
         command.Add(resizeStrategyOption);
         command.Add(resizeSpaceOption);
         command.Add(fineRadiusOption);
@@ -101,6 +109,14 @@ public static class SharpenCommand
             var longEdge = parseResult.GetValue(longEdgeOption) ?? baseOptions.LongEdge;
             var quality = parseResult.GetValue(qualityOption) ?? baseOptions.Quality;
             var allowUpscale = parseResult.GetValue(allowUpscaleOption) || baseOptions.AllowUpscale;
+            var baseCapture = baseOptions.CaptureSharpen;
+            var capture = baseCapture with
+            {
+                Level = parseResult.GetValue(captureSharpenOption) ?? baseCapture.Level,
+                Engine = parseResult.GetValue(captureEngineOption) ?? baseCapture.Engine,
+                Radius = parseResult.GetValue(captureRadiusOption) ?? baseCapture.Radius,
+                Iterations = parseResult.GetValue(captureIterationsOption) ?? baseCapture.Iterations,
+            };
             var resizeStrategy = parseResult.GetValue(resizeStrategyOption) ?? baseOptions.ResizeStrategy;
             var resizeSpace = parseResult.GetValue(resizeSpaceOption) ?? baseOptions.ResizeSpace;
 
@@ -116,6 +132,7 @@ public static class SharpenCommand
             {
                 LongEdge = longEdge,
                 AllowUpscale = allowUpscale,
+                CaptureSharpen = capture,
                 ResizeStrategy = resizeStrategy,
                 ResizeSpace = resizeSpace,
                 Quality = quality,

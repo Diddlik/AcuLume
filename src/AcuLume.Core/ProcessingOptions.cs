@@ -20,6 +20,9 @@ public sealed record ProcessingOptions
     /// <summary>JPEG quality (1-100). Ignored for lossless formats.</summary>
     public int Quality { get; init; } = 90;
 
+    /// <summary>Capture sharpening, applied at capture resolution before the resize. Off by default.</summary>
+    public CaptureSharpenOptions CaptureSharpen { get; init; } = new();
+
     /// <summary>Output sharpening (fine + medium bands), applied after resize. Disabled by default.</summary>
     public OutputSharpenOptions OutputSharpen { get; init; } = new();
 }

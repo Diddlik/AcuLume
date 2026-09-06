@@ -32,6 +32,12 @@ public sealed class AcuLumeProcessor
         var inputHeight = image.Height;
 
         var processed = image;
+        if (options.CaptureSharpen.IsEnabled)
+        {
+            processed = CaptureSharpen(inputPath, processed, options.CaptureSharpen);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
         if (options.LongEdge is { } longEdge)
         {
             processed = Resize(inputPath, processed, longEdge, options);
@@ -86,6 +92,19 @@ public sealed class AcuLumeProcessor
         catch (Exception ex)
         {
             throw new AcuLumeProcessingException(inputPath, ProcessingStage.Resize, $"Resize failed: {ex.Message}", ex);
+        }
+    }
+
+    private static NetVips.Image CaptureSharpen(string inputPath, NetVips.Image image, CaptureSharpenOptions options)
+    {
+        try
+        {
+            return CaptureSharpenStage.Apply(image, options);
+        }
+        catch (Exception ex)
+        {
+            throw new AcuLumeProcessingException(
+                inputPath, ProcessingStage.Sharpen, $"Capture sharpen failed: {ex.Message}", ex);
         }
     }
 

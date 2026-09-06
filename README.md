@@ -91,6 +91,8 @@ the tool writes `<name>.aculume<ext>` next to the input.
 |---|---|
 | `--preset <name\|path>` | Built-in preset name or a path to a preset JSON file |
 | `--long-edge <px>`, `--allow-upscale` | Output size; upscaling is off by default |
+| `--capture-sharpen <off\|low\|normal>` | Light restoration before the resize (spec section 21); off by default |
+| `--capture-engine <finerestore\|richardsonlucy>`, `--capture-radius`, `--capture-iterations` | Which restoration engine and its parameters; Richardson-Lucy is experimental |
 | `--resize-strategy <single\|staged>`, `--resize-space <gamma\|linearlight>` | Experimental resize research (spec Phase 3); defaults are `single` and `gamma` |
 | `--quality <1-100>` | JPEG quality |
 | `--fine-radius`, `--fine-amount` | Fine band — micro-texture |
@@ -172,5 +174,9 @@ Phase 1 of the specification is complete — the full adaptive multi-frequency p
   resampling were implemented, measured against an ideal FFT downscale, and neither earns a default
   change — libvips already shrinks in stages internally, and the moiré turned out to come from the
   camera sensor, not the resize.
-- **Phase 4 — advanced restoration.** Wiener / Richardson-Lucy as optional capture sharpening.
+- **Phase 4 — done, also a negative result.** Capture sharpening (`--capture-sharpen off|low|normal`)
+  and Richardson-Lucy deconvolution are implemented and off by default: measured against simply
+  turning the output stage up to the same acutance, both cost more halo, and Richardson-Lucy costs
+  ~9x the processing time. Deconvolution needs a PSF that a demosaiced, already-sharpened JPEG cannot
+  supply, so Wiener was not built for the same reason.
 - **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.
