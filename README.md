@@ -162,9 +162,11 @@ is what keeps the GUI preview and a CLI export in agreement.
 Phase 1 of the specification is complete — the full adaptive multi-frequency pipeline, presets,
 `compare`, and the desktop app. Next up:
 
-- **Phase 2 — calibration.** First pass done: the web presets now match a naive unsharp mask's
-  acutance while overshooting less (numbers in [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). Still open —
-  a wider photo corpus and dropping the `experimental` flag from `web-1800-crisp`.
+- **Phase 2 — calibration.** Presets calibrated against 200 photographs from two camera bodies:
+  `web-1800-natural` overshoots ~31% less per unit of sharpening than a reference unsharp mask, in 79
+  of 80 photographs, and pushes ~20x fewer pixels into clipping (method and numbers in
+  [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). Still open — dropping the `experimental` flag from
+  `web-1800-crisp`.
 - **Phase 3 — resize research.** Single vs. staged downscaling, gamma vs. linear-light.
 - **Phase 4 — advanced restoration.** Wiener / Richardson-Lucy as optional capture sharpening.
 - **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.

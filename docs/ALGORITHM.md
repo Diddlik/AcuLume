@@ -113,31 +113,54 @@ caller-supplied geometric coordinates (e.g. picked once by eye around a strong e
 test photo), not automatic content detection, since a robust detector for "shadow noise" or
 "highlight detail" regions would be over-engineering for Phase 1.
 
-## Calibration (Phase 2, first pass)
+## Calibration (Phase 2)
 
-Measured on real photographs at a 1800 px long edge, as mean absolute luminance gradient relative to
-the resize-only variant ("acutance"), with the 99.9th percentile of the difference from resize-only
-as a halo proxy:
+### Metrics
 
-| variant | acutance | halo p99.9 |
-|---|---|---|
-| resize-only | 1.00x | 0 |
-| naive USM baseline | 1.15-1.21x | 0.043-0.082 |
-| `web-1800-natural` | 1.12-1.18x | 0.038-0.068 |
-| `web-1800-crisp` | 1.20-1.28x | 0.050-0.093 |
+Two numbers, both computed on the luminance of the 1800 px output against the resize-only variant of
+the same photograph:
 
-`web-1800-natural` therefore lands at roughly the naive baseline's acutance while overshooting
-noticeably less — which is the entire claim the pipeline has to make. The amounts that produce this
-are ~5x the ones the presets shipped with before the sub-pixel radius fix, when only the medium band
-was actually running. `full-natural` was calibrated separately, at full resolution against the unsharpened image rather
-than against a downscale: its amounts were doubled to reach 1.11x with a 0.020 halo proxy — the
-lowest overshoot of any candidate — which keeps it "gentle" as a print/archival preset while being
-clearly better than no sharpening at 100%.
+- **Acutance** — mean absolute horizontal/vertical gradient, expressed as a ratio to resize-only.
+  How much apparent sharpness the stage added.
+- **Overshoot** — mean excursion outside the pre-sharpening *local envelope*: with `hi` and `lo` the
+  5x5 local maximum and minimum of the resize-only luminance, overshoot is `mean(max(L - hi, 0))` and
+  undershoot `mean(max(lo - L, 0))`. A pixel pushed past what its own neighbourhood contains is a
+  halo; extra contrast inside the envelope is not.
 
-Verified across both sample photographs. On fine regular texture (a piqué knit) `web-1800-natural`
-resolves slightly more than the naive baseline (1.41x vs 1.38x) at a lower overshoot, which is the
-fine band doing its job; `web-1800-crisp` renders the same weave as a hard grid, which is one reason
-it stays flagged experimental.
+The obvious cheap proxy — a high percentile of `sharpened - resize-only` — is not usable here. It
+grows with any sharpening at all, so it scores a strong sharpener as haloed and a weak one as clean,
+which is the opposite of what the guards are for. An earlier pass of this calibration used it and
+drew the wrong conclusion.
+
+### Results
+
+Over 200 randomly sampled photographs from two shoots and two bodies (Canon R6, Fujifilm X-T2), at a
+1800 px long edge, against a deliberately strong reference unsharp mask (sigma 0.8, amount 0.8):
+
+| variant | acutance (median) | overshoot | undershoot | overshoot per unit of gain | clipping increase |
+|---|---|---|---|---|---|
+| `web-1800-natural` | 1.19x | 0.00029 | 0.00052 | 0.00147 | +0.005% |
+| `web-1800-crisp` | 1.30x | 0.00051 | 0.00094 | 0.00165 | +0.016% |
+| reference USM | 1.36x | 0.00080 | 0.00089 | 0.00213 | +0.113% |
+
+`web-1800-natural` overshoots ~31% less per unit of sharpening than the reference mask, and does so
+in 79 of 80 photographs in the envelope-metric subset; it also pushes ~20x fewer pixels into
+clipping. Its undershoot exceeding its overshoot is the asymmetric dark/light split (0.80/0.50)
+showing up as intended: dark-side detail is carried, bright halos are held back.
+
+The calibration is stable and body-independent: mean acutance 1.192x on the R6 (n=159) and 1.195x on
+the X-T2 (n=41) despite the X-Trans sensor, with a p5-p95 spread of 1.14-1.27.
+
+The amounts producing this are ~5x the ones the presets shipped with before the sub-pixel radius fix,
+when only the medium band was actually running.
+
+`full-natural` was calibrated separately, at full resolution against the unsharpened image rather than
+a downscale: doubling its amounts reaches 1.11x acutance and remains visibly clean at 100%, which
+keeps it "gentle" for print and archival exports.
+
+On fine regular texture (a piqué knit) `web-1800-natural` resolves more than the reference mask does
+at a lower overshoot -- the fine band doing its job. `web-1800-crisp` renders the same weave as a hard
+grid, which is one reason it stays flagged experimental.
 
 ## Not yet implemented
 
