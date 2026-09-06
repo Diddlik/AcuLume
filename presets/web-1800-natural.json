@@ -10,17 +10,17 @@
   "outputSharpen": {
     "fine": {
       "radius": 0.35,
-      "amount": 5.00,
+      "amount": 6.00,
       "darkAmount": 0.80,
       "lightAmount": 0.50
     },
     "medium": {
       "radius": 0.90,
-      "amount": 1.50,
+      "amount": 1.80,
       "darkAmount": 0.80,
       "lightAmount": 0.50
     },
-    "noiseProtection": 0.45,
+    "noiseProtection": 1.00,
     "edgeProtection": 0.65,
     "haloProtection": 0.70
   },

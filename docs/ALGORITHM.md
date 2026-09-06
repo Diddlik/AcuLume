@@ -158,6 +158,26 @@ when only the medium band was actually running.
 a downscale: doubling its amounts reaches 1.11x acutance and remains visibly clean at 100%, which
 keeps it "gentle" for print and archival exports.
 
+### Noise protection strength
+
+`NoiseProtection` blends between passing detail untouched and applying the soft threshold in full:
+`weight = 1 - amount * (1 - smoothstep(...))`. The amount is therefore a ceiling on how much can ever
+be removed — at 0.45 more than half of below-threshold detail passes no matter where the threshold
+sits. That residue was small while the band amounts were around 1.0; after the calibration above
+multiplied them by five, it was five times larger, and it showed as noise in skin.
+
+Raising the *threshold* does not help, and measuring says so: at a matched face detail of 1.13x,
+thresholds of 2.5, 4 and 6 all left skin noise at 1.12x against the resize-only variant. Neither does
+moving weight to the medium band (1.21x) or widening the fine radius (1.16x) — both make it worse.
+Only the amount helps: 0.8 gives 1.06x and 1.0 gives 1.02x.
+
+So every preset now runs noise protection at 1.0, with band amounts raised to restore the whole-frame
+acutance each preset had before (`web-1800-natural` x1.2, `web-1800-crisp` x1.3, `full-natural`
+x1.45). Measured over 24 photographs the global result is unchanged — acutance 1.205x against 1.205x,
+fine-band boost 1.285x against 1.286x, overshoot per unit of gain 5% higher — while on faces skin
+noise falls from 1.114x to 1.007x. Face micro-detail drops from 1.109x to 1.056x, which is the honest
+cost: at an 1800 px long edge much of what sits at that scale in skin is grain rather than texture.
+
 ### Known limitation: near-Nyquist texture
 
 Ranking the corpus by how much of its energy sits in the band the fine radius operates on, and
