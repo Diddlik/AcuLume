@@ -200,6 +200,8 @@ Phase 1 of the specification is complete — the full adaptive multi-frequency p
   turning the output stage up to the same acutance, both cost more halo, and Richardson-Lucy costs
   ~9x the processing time. Deconvolution needs a PSF that a demosaiced, already-sharpened JPEG cannot
   supply, so Wiener was not built for the same reason.
-- **Phase 5 — distribution.** Windows x64 done: self-contained publish, Velopack installer and
-  portable zip, and in-app updates from GitHub releases. Linux x64 packaging is still open, as is
-  code signing — installers are currently unsigned, so Windows SmartScreen will warn on first run.
+- **Phase 5 — distribution.** Windows x64 shipped in
+  [v0.1.0](https://github.com/Diddlik/AcuLume/releases/tag/v0.1.0): self-contained publish, Velopack
+  installer and portable zip, and in-app updates from GitHub releases, verified end to end against
+  the published release. Linux x64 packaging is still open, as is code signing — installers are
+  unsigned, so Windows SmartScreen will warn on first run.
