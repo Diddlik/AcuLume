@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AcuLume.Gui.ViewModels"
+             x:Class="AcuLume.Gui.Views.CompareView"
+             x:DataType="vm:CompareViewModel">
+
+  <UserControl.Styles>
+    <Style Selector="Button.tile">
+      <Setter Property="Margin" Value="0,0,12,12" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="#0E1012" />
+      <Setter Property="BorderBrush" Value="#1F252B" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.tile /template/ ContentPresenter">
+      <Setter Property="Background" Value="#0E1012" />
+      <Setter Property="BorderBrush" Value="#1F252B" />
+    </Style>
+    <Style Selector="Button.tile:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="#0E1012" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlBorderHover}" />
+    </Style>
+    <Style Selector="Button.tile.selected /template/ ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+    </Style>
+  </UserControl.Styles>
+
+  <DockPanel Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Height="44" Background="{DynamicResource ToolbarBackground}"
+            BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1">
+      <Grid Margin="12,0" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+        <TextBlock Grid.Column="0" Classes="title" Text="Compare" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+        <Border Grid.Column="1" Classes="segments">
+          <StackPanel Orientation="Horizontal">
+            <RadioButton Classes="segment" Content="2-up" GroupName="Up"
+                         IsChecked="{Binding Columns, Converter={StaticResource EnumMatch}, ConverterParameter=2}" />
+            <RadioButton Classes="segment" Content="3-up" GroupName="Up"
+                         IsChecked="{Binding Columns, Converter={StaticResource EnumMatch}, ConverterParameter=3}" />
+            <RadioButton Classes="segment" Content="4-up" GroupName="Up"
+                         IsChecked="{Binding Columns, Converter={StaticResource EnumMatch}, ConverterParameter=4}" />
+          </StackPanel>
+        </Border>
+
+        <Button Grid.Column="2" Classes="ghost" Margin="8,0" Content="Rebuild"
+                Command="{Binding BuildCommand}" IsEnabled="{Binding HasImage}" />
+
+        <TextBlock Grid.Column="4" Classes="mono" FontSize="11" Text="{Binding StatusText}"
+                   VerticalAlignment="Center" Foreground="#7C858D" />
+      </Grid>
+    </Border>
+
+    <Border DockPanel.Dock="Right" Width="250" Background="{DynamicResource PanelBackground}"
+            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1,0,0,0">
+      <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Spacing="8">
+          <TextBlock Classes="hint" Text="Pick a variant to load its parameters into the Sharpen panel." />
+          <Button Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="{Binding ApplyButtonText}" Command="{Binding ApplySelectedCommand}"
+                  IsEnabled="{Binding CanApply}" />
+        </StackPanel>
+
+        <StackPanel Spacing="10">
+          <TextBlock Classes="section" Text="VARIANTS" />
+          <ItemsControl ItemsSource="{Binding Tiles}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:CompareTile">
+                <StackPanel Margin="0,0,0,10">
+                  <TextBlock FontSize="11.5" Text="{Binding Label}" Foreground="{DynamicResource TextSecondary}" />
+                  <TextBlock Classes="hint" FontSize="10.5" Text="{Binding Description}" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <Panel>
+      <TextBlock Text="Open an image in Sharpen, then compare the variants"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource TextGhost}" IsVisible="{Binding !HasImage}" />
+
+      <TextBlock Text="Building comparison set…" HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{DynamicResource Accent}" IsVisible="{Binding IsBuilding}" />
+
+      <ScrollViewer Padding="16">
+        <ItemsControl Name="TileList" ItemsSource="{Binding Tiles}">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+              <WrapPanel Orientation="Horizontal" />
+            </ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:CompareTile">
+              <Button Classes="tile" Classes.selected="{Binding IsSelected}"
+                      Width="{Binding $parent[ItemsControl].((vm:CompareViewModel)DataContext).TileWidth}"
+                      Command="{Binding $parent[ItemsControl].((vm:CompareViewModel)DataContext).SelectCommand}"
+                      CommandParameter="{Binding}">
+                <Panel>
+                  <Image Source="{Binding Image}" Stretch="Uniform" />
+                  <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8"
+                          Background="{DynamicResource OverlayBackground}" CornerRadius="4" Padding="8,3">
+                    <TextBlock FontSize="10.5" LetterSpacing="0.8" Text="{Binding Label}"
+                               Foreground="{DynamicResource TextSecondary}" />
+                  </Border>
+                </Panel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
+    </Panel>
+  </DockPanel>
+</UserControl>

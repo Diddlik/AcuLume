@@ -1,6 +1,7 @@
 {
   "version": 1,
   "name": "full-natural",
+  "description": "Gentle sharpening at full resolution, for prints and archival exports.",
   "resize": {
     "enabled": false
   },

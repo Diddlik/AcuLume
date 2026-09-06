@@ -1,6 +1,7 @@
 {
   "version": 1,
   "name": "web-1800-natural",
+  "description": "Balanced web export at 1800 px long edge — the default for online galleries.",
   "resize": {
     "enabled": true,
     "longEdge": 1800,

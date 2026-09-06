@@ -2,9 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/AcuLume.Cli/AcuLume.Cli.csproj" />
     <Project Path="src/AcuLume.Core/AcuLume.Core.csproj" />
+    <Project Path="src/AcuLume.Gui/AcuLume.Gui.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AcuLume.Cli.Tests/AcuLume.Cli.Tests.csproj" />
     <Project Path="tests/AcuLume.Core.Tests/AcuLume.Core.Tests.csproj" />
+    <Project Path="tests/AcuLume.Gui.Tests/AcuLume.Gui.Tests.csproj" />
   </Folder>
 </Solution>

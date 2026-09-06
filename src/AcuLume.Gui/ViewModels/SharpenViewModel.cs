@@ -1,0 +1,583 @@
+using System.Collections.ObjectModel;
+using AcuLume.Core;
+using AcuLume.Core.Configuration;
+using AcuLume.Core.Imaging;
+using AcuLume.Core.Sharpening;
+using AcuLume.Gui.Services;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace AcuLume.Gui.ViewModels;
+
+public enum PreviewMode { Before, After, Split }
+
+public enum ZoomMode { Fit, Percent100, Percent200 }
+
+public enum OutputTarget { Full, Web, Custom }
+
+public sealed partial class SharpenViewModel : ObservableObject, IDisposable
+{
+    private const int WebLongEdge = 1800;
+
+    // Long enough that a drag doesn't queue a render per pixel, short enough to feel live.
+    private static readonly TimeSpan PreviewDebounce = TimeSpan.FromMilliseconds(180);
+
+    private readonly PreviewRenderer _renderer = new();
+    private readonly DispatcherTimer _debounce;
+    private readonly AcuLumeProcessor _processor = new();
+    private readonly PresetLibrary _library;
+    private readonly RecentImages _recent;
+
+    private CancellationTokenSource? _renderCts;
+    private bool _suppressPreview;
+
+    public SharpenViewModel(PresetLibrary library, RecentImages recent)
+    {
+        _library = library;
+        _recent = recent;
+
+        foreach (var entry in _recent.Load())
+        {
+            Recent.Add(entry);
+        }
+
+        _debounce = new DispatcherTimer { Interval = PreviewDebounce };
+        _debounce.Tick += (_, _) =>
+        {
+            _debounce.Stop();
+            _ = RenderPreviewAsync();
+        };
+
+        RefreshPresets();
+
+        // Setting the property applies the preset through OnSelectedPresetChanged.
+        SelectedPreset = Presets.Contains("web-1800-natural") ? "web-1800-natural" : Presets.FirstOrDefault();
+    }
+
+    /// <summary>Re-reads the library, keeping the current selection when it still exists.</summary>
+    public void RefreshPresets()
+    {
+        var previous = SelectedPreset;
+
+        Presets.Clear();
+        foreach (var entry in _library.Load())
+        {
+            Presets.Add(entry.Name);
+        }
+
+        if (previous is not null && Presets.Contains(previous))
+        {
+            SelectedPreset = previous;
+        }
+    }
+
+    // ---- image ----
+
+    [ObservableProperty]
+    public partial string? ImagePath { get; set; }
+
+    [ObservableProperty]
+    public partial string FileName { get; set; } = "No image loaded";
+
+    [ObservableProperty]
+    public partial int SourceWidth { get; set; }
+
+    [ObservableProperty]
+    public partial int SourceHeight { get; set; }
+
+    [ObservableProperty]
+    public partial int OutputWidth { get; set; }
+
+    [ObservableProperty]
+    public partial int OutputHeight { get; set; }
+
+    [ObservableProperty]
+    public partial Bitmap? BeforeImage { get; set; }
+
+    [ObservableProperty]
+    public partial Bitmap? AfterImage { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsRendering { get; set; }
+
+    /// <summary>Normalised luminance buckets of the current preview; drives the histogram overlay.</summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<double> Histogram { get; set; } = [];
+
+    [ObservableProperty]
+    public partial bool ShowHistogram { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsExporting { get; set; }
+
+    /// <summary>Set once an export succeeds, so the panel can offer to reveal the file.</summary>
+    [ObservableProperty]
+    public partial string? LastExportPath { get; set; }
+
+    public bool HasExport => LastExportPath is not null;
+
+    partial void OnLastExportPathChanged(string? value) => OnPropertyChanged(nameof(HasExport));
+
+    [ObservableProperty]
+    public partial string StatusText { get; set; } = "Open an image to begin";
+
+    public bool HasImage => ImagePath is not null;
+
+    // ---- view state ----
+
+    [ObservableProperty]
+    public partial PreviewMode PreviewMode { get; set; } = PreviewMode.After;
+
+    /// <summary>Split handle position as a fraction of the preview width.</summary>
+    [ObservableProperty]
+    public partial double SplitPosition { get; set; } = 0.5;
+
+    [ObservableProperty]
+    public partial ZoomMode Zoom { get; set; } = ZoomMode.Fit;
+
+    public bool IsSplit => PreviewMode == PreviewMode.Split;
+
+    public bool ShowBeforeLayer => PreviewMode != PreviewMode.After;
+
+    /// <summary>Preview canvas size in device pixels; NaN lets the layout size it to fit.</summary>
+    public double PreviewPixelWidth => Zoom == ZoomMode.Fit ? double.NaN : OutputWidth * ZoomFactor;
+
+    public double PreviewPixelHeight => Zoom == ZoomMode.Fit ? double.NaN : OutputHeight * ZoomFactor;
+
+    public string ZoomLabel => Zoom switch
+    {
+        ZoomMode.Percent100 => "100%",
+        ZoomMode.Percent200 => "200%",
+        _ => "Fit",
+    };
+
+    private double ZoomFactor => Zoom == ZoomMode.Percent200 ? 2 : 1;
+
+    partial void OnPreviewModeChanged(PreviewMode value)
+    {
+        OnPropertyChanged(nameof(IsSplit));
+        OnPropertyChanged(nameof(ShowBeforeLayer));
+    }
+
+    partial void OnZoomChanged(ZoomMode value)
+    {
+        OnPropertyChanged(nameof(ZoomLabel));
+        OnPropertyChanged(nameof(PreviewPixelWidth));
+        OnPropertyChanged(nameof(PreviewPixelHeight));
+    }
+
+    partial void OnOutputWidthChanged(int value) => OnPropertyChanged(nameof(PreviewPixelWidth));
+
+    partial void OnOutputHeightChanged(int value) => OnPropertyChanged(nameof(PreviewPixelHeight));
+
+    // ---- output ----
+
+    [ObservableProperty]
+    public partial OutputTarget OutputTarget { get; set; } = OutputTarget.Web;
+
+    [ObservableProperty]
+    public partial int LongEdge { get; set; } = WebLongEdge;
+
+    [ObservableProperty]
+    public partial int Quality { get; set; } = 90;
+
+    // ---- sharpening ----
+
+    /// <summary>Master multiplier over both band amounts; the panel's single "Overall" control.</summary>
+    [ObservableProperty]
+    public partial double Overall { get; set; } = 1.0;
+
+    [ObservableProperty]
+    public partial double FineAmount { get; set; }
+
+    [ObservableProperty]
+    public partial double FineRadius { get; set; } = 0.6;
+
+    [ObservableProperty]
+    public partial double MediumAmount { get; set; }
+
+    [ObservableProperty]
+    public partial double MediumRadius { get; set; } = 1.4;
+
+    [ObservableProperty]
+    public partial double DarkDetail { get; set; } = 0.8;
+
+    [ObservableProperty]
+    public partial double LightDetail { get; set; } = 0.5;
+
+    // ---- protection ----
+
+    [ObservableProperty]
+    public partial bool NoiseProtectionEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial double NoiseProtectionAmount { get; set; }
+
+    [ObservableProperty]
+    public partial bool EdgeProtectionEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial double EdgeProtectionAmount { get; set; }
+
+    [ObservableProperty]
+    public partial bool HaloProtectionEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial double HaloProtectionAmount { get; set; }
+
+    // ---- presets ----
+
+    public ObservableCollection<string> Presets { get; } = [];
+
+    /// <summary>Most recently opened images, newest first.</summary>
+    public ObservableCollection<RecentImage> Recent { get; } = [];
+
+    [ObservableProperty]
+    public partial string? SelectedPreset { get; set; }
+
+    partial void OnSelectedPresetChanged(string? value)
+    {
+        if (value is not null)
+        {
+            ApplySelectedPreset();
+        }
+    }
+
+    partial void OnOutputTargetChanged(OutputTarget value)
+    {
+        LongEdge = value switch
+        {
+            OutputTarget.Full => Math.Max(SourceWidth, SourceHeight) is var edge and > 0 ? edge : LongEdge,
+            OutputTarget.Web => WebLongEdge,
+            _ => LongEdge,
+        };
+    }
+
+    // ---- commands ----
+
+    public async Task LoadImageAsync(string path)
+    {
+        var metadata = ImageLoader.ReadMetadata(path);
+
+        // EXIF orientation is baked in at load time, so a rotated source reports swapped dimensions.
+        var (width, height) = metadata.Orientation is >= 5 and <= 8
+            ? (metadata.Height, metadata.Width)
+            : (metadata.Width, metadata.Height);
+
+        SourceWidth = width;
+        SourceHeight = height;
+        ImagePath = path;
+        FileName = Path.GetFileName(path);
+        LastExportPath = null;
+        OnPropertyChanged(nameof(HasImage));
+
+        Recent.Clear();
+        foreach (var item in _recent.Add(new RecentImage(path, FileName, $"{width} × {height}")))
+        {
+            Recent.Add(item);
+        }
+
+        if (OutputTarget == OutputTarget.Full)
+        {
+            LongEdge = Math.Max(width, height);
+        }
+
+        await RenderPreviewAsync().ConfigureAwait(true);
+    }
+
+    [RelayCommand]
+    private void ResetPreset() => ApplySelectedPreset();
+
+    public string SuggestedOutputName => ImagePath is null
+        ? "output.jpg"
+        : $"{Path.GetFileNameWithoutExtension(ImagePath)}.aculume.jpg";
+
+    public async Task ExportAsync(string outputPath)
+    {
+        if (ImagePath is null)
+        {
+            return;
+        }
+
+        var options = BuildOptions();
+        IsExporting = true;
+        LastExportPath = null;
+        StatusText = $"Exporting {Path.GetFileName(outputPath)}…";
+        try
+        {
+            var input = ImagePath;
+            var result = await Task.Run(() => _processor.Process(input, outputPath, options)).ConfigureAwait(true);
+            LastExportPath = result.OutputPath;
+            StatusText = $"Exported {result.OutputWidth} × {result.OutputHeight} in {result.Elapsed.TotalSeconds:F1} s";
+        }
+        catch (AcuLumeProcessingException ex)
+        {
+            StatusText = $"Export failed ({ex.Stage}): {ex.Message}";
+        }
+        finally
+        {
+            IsExporting = false;
+        }
+    }
+
+    /// <summary>Opens the exported file's folder in the system file manager and selects it.</summary>
+    [RelayCommand]
+    private void RevealExport()
+    {
+        if (LastExportPath is not { } path || !File.Exists(path))
+        {
+            return;
+        }
+
+        var (command, arguments) = OperatingSystem.IsWindows()
+            ? ("explorer.exe", $"/select,\"{path}\"")
+            : ("xdg-open", $"\"{Path.GetDirectoryName(path)}\"");
+
+        try
+        {
+            using var process = System.Diagnostics.Process.Start(
+                new System.Diagnostics.ProcessStartInfo(command, arguments) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            StatusText = $"Could not open the folder: {ex.Message}";
+        }
+    }
+
+    /// <summary>Saves the panel's current settings as a new user preset and selects it.</summary>
+    public void SaveAsPreset(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var unique = _library.UniqueName(name.Trim());
+        _library.Save(ToPreset(unique, "Saved from the Sharpen panel."));
+
+        _suppressPreview = true;
+        try
+        {
+            RefreshPresets();
+            SelectedPreset = unique;
+        }
+        finally
+        {
+            _suppressPreview = false;
+        }
+
+        StatusText = $"Saved preset '{unique}'";
+    }
+
+    /// <summary>Name to offer when saving: the selected preset with a "copy" suffix.</summary>
+    public string SuggestedPresetName => SelectedPreset is { } name ? $"{name} copy" : "My preset";
+
+    public ProcessingOptions BuildOptions() => new()
+    {
+        LongEdge = LongEdge,
+        AllowUpscale = false,
+        Quality = Quality,
+        OutputSharpen = new OutputSharpenOptions
+        {
+            Fine = new BandSharpenOptions
+            {
+                Radius = FineRadius,
+                Amount = FineAmount * Overall,
+                DarkAmount = DarkDetail,
+                LightAmount = LightDetail,
+            },
+            Medium = new BandSharpenOptions
+            {
+                Radius = MediumRadius,
+                Amount = MediumAmount * Overall,
+                DarkAmount = DarkDetail,
+                LightAmount = LightDetail,
+            },
+            NoiseProtection = new NoiseProtectionOptions
+            {
+                Amount = NoiseProtectionEnabled ? NoiseProtectionAmount : 0,
+            },
+            EdgeProtection = new EdgeProtectionOptions
+            {
+                Amount = EdgeProtectionEnabled ? EdgeProtectionAmount : 0,
+            },
+            HaloLimiter = new HaloLimiterOptions
+            {
+                Amount = HaloProtectionEnabled ? HaloProtectionAmount : 0,
+            },
+        },
+    };
+
+    /// <summary>
+    /// Captures the panel's current state as a savable preset. The Overall multiplier is folded into
+    /// the band amounts, because the preset schema has no such field — the CLI must produce the same
+    /// result from this file as the panel shows.
+    /// </summary>
+    public SharpenPreset ToPreset(string name, string? description = null) => new()
+    {
+        Version = 1,
+        Name = name,
+        Description = description,
+        Resize = new ResizePresetOptions { Enabled = true, LongEdge = LongEdge, AllowUpscale = false },
+        OutputSharpen = new OutputSharpenPresetOptions
+        {
+            Fine = new BandPresetOptions
+            {
+                Radius = FineRadius,
+                Amount = FineAmount * Overall,
+                DarkAmount = DarkDetail,
+                LightAmount = LightDetail,
+            },
+            Medium = new BandPresetOptions
+            {
+                Radius = MediumRadius,
+                Amount = MediumAmount * Overall,
+                DarkAmount = DarkDetail,
+                LightAmount = LightDetail,
+            },
+            NoiseProtection = NoiseProtectionEnabled ? NoiseProtectionAmount : 0,
+            EdgeProtection = EdgeProtectionEnabled ? EdgeProtectionAmount : 0,
+            HaloProtection = HaloProtectionEnabled ? HaloProtectionAmount : 0,
+        },
+        Output = new OutputPresetOptions { Quality = Quality },
+    };
+
+    private void ApplySelectedPreset()
+    {
+        if (SelectedPreset is { } name && _library.Load().FirstOrDefault(e => e.Name == name) is { } entry)
+        {
+            Apply(entry.Preset);
+        }
+    }
+
+    /// <summary>Loads a preset's parameters into the panel. Used by the preset library and compare views.</summary>
+    public void Apply(SharpenPreset preset)
+    {
+        var options = PresetLoader.ToProcessingOptions(preset);
+        var sharpen = options.OutputSharpen;
+
+        _suppressPreview = true;
+        try
+        {
+            Overall = 1.0;
+            FineAmount = sharpen.Fine.Amount;
+            FineRadius = sharpen.Fine.Radius;
+            MediumAmount = sharpen.Medium.Amount;
+            MediumRadius = sharpen.Medium.Radius;
+            DarkDetail = sharpen.Fine.DarkAmount;
+            LightDetail = sharpen.Fine.LightAmount;
+
+            NoiseProtectionAmount = sharpen.NoiseProtection.Amount;
+            NoiseProtectionEnabled = sharpen.NoiseProtection.IsEnabled;
+            EdgeProtectionAmount = sharpen.EdgeProtection.Amount;
+            EdgeProtectionEnabled = sharpen.EdgeProtection.IsEnabled;
+            HaloProtectionAmount = sharpen.HaloLimiter.Amount;
+            HaloProtectionEnabled = sharpen.HaloLimiter.IsEnabled;
+
+            Quality = options.Quality;
+
+            if (options.LongEdge is { } edge)
+            {
+                LongEdge = edge;
+                OutputTarget = edge == WebLongEdge ? OutputTarget.Web : OutputTarget.Custom;
+            }
+            else
+            {
+                OutputTarget = OutputTarget.Full;
+                LongEdge = Math.Max(SourceWidth, SourceHeight) is var full and > 0 ? full : LongEdge;
+            }
+        }
+        finally
+        {
+            _suppressPreview = false;
+        }
+
+        SchedulePreview();
+    }
+
+    protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if (_suppressPreview || e.PropertyName is null || !AffectsPreview(e.PropertyName))
+        {
+            return;
+        }
+
+        SchedulePreview();
+    }
+
+    private static bool AffectsPreview(string propertyName) => propertyName is
+        nameof(LongEdge) or nameof(Overall) or
+        nameof(FineAmount) or nameof(FineRadius) or
+        nameof(MediumAmount) or nameof(MediumRadius) or
+        nameof(DarkDetail) or nameof(LightDetail) or
+        nameof(NoiseProtectionEnabled) or nameof(NoiseProtectionAmount) or
+        nameof(EdgeProtectionEnabled) or nameof(EdgeProtectionAmount) or
+        nameof(HaloProtectionEnabled) or nameof(HaloProtectionAmount);
+
+    private void SchedulePreview()
+    {
+        if (ImagePath is null)
+        {
+            return;
+        }
+
+        _debounce.Stop();
+        _debounce.Start();
+    }
+
+    private async Task RenderPreviewAsync()
+    {
+        if (ImagePath is not { } path)
+        {
+            return;
+        }
+
+        var previous = _renderCts;
+        var cts = new CancellationTokenSource();
+        _renderCts = cts;
+        if (previous is not null)
+        {
+            await previous.CancelAsync().ConfigureAwait(true);
+            previous.Dispose();
+        }
+
+        IsRendering = true;
+        try
+        {
+            var frame = await _renderer.RenderAsync(path, BuildOptions(), cts.Token).ConfigureAwait(true);
+            BeforeImage = frame.Before;
+            AfterImage = frame.After;
+            Histogram = frame.Histogram;
+            OutputWidth = frame.Width;
+            OutputHeight = frame.Height;
+            StatusText = $"Preview {frame.Width} × {frame.Height} · {frame.Elapsed.TotalMilliseconds:F0} ms";
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer render; the newer one reports status.
+            return;
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Preview failed: {ex.Message}";
+        }
+        finally
+        {
+            if (ReferenceEquals(_renderCts, cts))
+            {
+                IsRendering = false;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _debounce.Stop();
+        _renderCts?.Dispose();
+        _renderer.Dispose();
+    }
+}

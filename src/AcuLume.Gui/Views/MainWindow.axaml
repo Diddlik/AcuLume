@@ -1,0 +1,161 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:AcuLume.Gui.ViewModels"
+        xmlns:views="using:AcuLume.Gui.Views"
+        xmlns:services="using:AcuLume.Gui.Services"
+        x:Class="AcuLume.Gui.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="AcuLume"
+        Width="1500" Height="940"
+        MinWidth="1100" MinHeight="700"
+        Background="{DynamicResource AppBackground}"
+        FontFamily="{DynamicResource UiFont}"
+        FontSize="13"
+        Foreground="{DynamicResource TextPrimary}">
+
+  <Window.Styles>
+    <Style Selector="ToggleButton.nav">
+      <Setter Property="Foreground" Value="#9AA3AB" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="bg" CornerRadius="5" Padding="9,7" Background="Transparent">
+            <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="ToggleButton.nav:pointerover /template/ Border#bg">
+      <Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+    </Style>
+    <Style Selector="ToggleButton.nav:checked /template/ Border#bg">
+      <Setter Property="Background" Value="#1A1F25" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+      <Setter Property="BorderThickness" Value="2,0,0,0" />
+    </Style>
+    <Style Selector="ToggleButton.nav:checked">
+      <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+    </Style>
+
+    <Style Selector="Button.recent">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="5" />
+      <Setter Property="Padding" Value="8,6" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.recent /template/ ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.recent:pointerover /template/ ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+    </Style>
+  </Window.Styles>
+
+  <Grid ColumnDefinitions="240,*">
+
+    <!-- ===== SIDEBAR ===== -->
+    <Border Grid.Column="0" Background="{DynamicResource PanelBackground}"
+            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="0,0,1,0">
+      <DockPanel LastChildFill="True">
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="16,16,16,14">
+          <Canvas Width="22" Height="22">
+            <Path Data="M11 2.5 L18.5 19.5 L3.5 19.5 Z" Stroke="{DynamicResource Accent}" StrokeThickness="1.2" />
+            <Path Data="M11 2.5 V19.5" Stroke="#EDF1F4" StrokeThickness="1.1" />
+            <Path Data="M6.5 15.5 H15.5" Stroke="#EDF1F4" StrokeThickness="1.1" Opacity="0.75" />
+          </Canvas>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="ACULUME" FontSize="14" FontWeight="SemiBold" LetterSpacing="2"
+                       Foreground="{DynamicResource TextPrimary}" />
+            <TextBlock Text="Sharpen for the output" FontSize="10.5" Margin="0,1,0,0"
+                       Foreground="{DynamicResource TextDim}" />
+          </StackPanel>
+        </StackPanel>
+
+        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding NavItems}" Margin="8,6">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:NavItem">
+              <ToggleButton Classes="nav"
+                            AutomationProperties.Name="{Binding Label}"
+                            IsChecked="{Binding IsActive, Mode=OneWay}"
+                            CommandParameter="{Binding Section}"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).NavigateCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <Path Data="{Binding Icon, Converter={StaticResource PathGeometry}}"
+                        Width="15" Height="15" Stretch="Uniform"
+                        Stroke="{Binding $parent[ToggleButton].Foreground}" StrokeThickness="1.5"
+                        StrokeLineCap="Round" StrokeJoin="Round" Opacity="0.85" />
+                  <TextBlock Text="{Binding Label}" FontSize="12.5" FontWeight="Medium"
+                             Foreground="{Binding $parent[ToggleButton].Foreground}" />
+                </StackPanel>
+              </ToggleButton>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel DockPanel.Dock="Top" Margin="16,16,16,8" Orientation="Horizontal"
+                    IsVisible="{Binding !!Sharpen.Recent.Count}">
+          <TextBlock Classes="section" Text="RECENT IMAGES" />
+        </StackPanel>
+
+        <ItemsControl DockPanel.Dock="Top" Margin="8,0" ItemsSource="{Binding Sharpen.Recent}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="services:RecentImage">
+              <Button Classes="recent"
+                      AutomationProperties.Name="{Binding Name}"
+                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentCommand}"
+                      CommandParameter="{Binding}">
+                <StackPanel>
+                  <TextBlock FontSize="11.5" Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                             Foreground="{DynamicResource TextSecondary}" />
+                  <TextBlock Classes="mono" FontSize="10" Text="{Binding Meta}"
+                             Foreground="{DynamicResource TextFaint}" />
+                </StackPanel>
+              </Button>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="16,12" Spacing="6">
+          <Border Height="1" Background="{DynamicResource PanelBorder}" Margin="0,0,0,6" />
+          <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Width="6" Height="6" Fill="{DynamicResource Success}" VerticalAlignment="Center" />
+            <TextBlock Text="Engine ready" FontSize="11" Foreground="#9AA3AB" />
+          </StackPanel>
+          <TextBlock Classes="mono" Text="{Binding VersionLine}" FontSize="10.5"
+                     Foreground="{DynamicResource TextFaint}" />
+        </StackPanel>
+
+        <Panel />
+      </DockPanel>
+    </Border>
+
+    <!-- ===== CONTENT ===== -->
+    <Panel Grid.Column="1">
+      <ContentControl IsVisible="{Binding IsSharpenActive}">
+        <views:SharpenView Name="Sharpen" DataContext="{Binding Sharpen}" />
+      </ContentControl>
+      <ContentControl IsVisible="{Binding IsBatchActive}">
+        <views:BatchView DataContext="{Binding Batch}" />
+      </ContentControl>
+      <ContentControl IsVisible="{Binding IsPresetsActive}">
+        <views:PresetsView DataContext="{Binding Presets}" />
+      </ContentControl>
+      <ContentControl IsVisible="{Binding IsCompareActive}">
+        <views:CompareView DataContext="{Binding Compare}" />
+      </ContentControl>
+      <ContentControl IsVisible="{Binding IsImageInfoActive}">
+        <views:ImageInfoView DataContext="{Binding ImageInfo}" />
+      </ContentControl>
+      <ContentControl IsVisible="{Binding IsSettingsActive}">
+        <views:SettingsView DataContext="{Binding Settings}" />
+      </ContentControl>
+    </Panel>
+
+  </Grid>
+</Window>

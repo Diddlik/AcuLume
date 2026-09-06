@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AcuLume.Gui.ViewModels"
+             x:Class="AcuLume.Gui.Views.ImageInfoView"
+             x:DataType="vm:ImageInfoViewModel">
+
+  <DockPanel Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Height="44" Background="{DynamicResource ToolbarBackground}"
+            BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1">
+      <StackPanel Orientation="Horizontal" Spacing="10" Margin="12,0" VerticalAlignment="Center">
+        <TextBlock Classes="title" Text="Image Info" />
+        <TextBlock Classes="mono" FontSize="11" Text="{Binding FileName}" Foreground="#7C858D" />
+      </StackPanel>
+    </Border>
+
+    <ScrollViewer Padding="26,22">
+      <Panel>
+        <TextBlock Text="Open an image in Sharpen to see its details"
+                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,80"
+                   Foreground="{DynamicResource TextGhost}" IsVisible="{Binding !HasImage}" />
+
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="26" MaxWidth="1100" HorizontalAlignment="Left"
+              IsVisible="{Binding HasImage}">
+
+          <StackPanel Grid.Column="0">
+            <TextBlock Classes="section" Text="FILE" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding FileRows}" ItemTemplate="{StaticResource InfoRowTemplate}" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1">
+            <TextBlock Classes="section" Text="CAPTURE" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding CaptureRows}" ItemTemplate="{StaticResource InfoRowTemplate}" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="2">
+            <TextBlock Classes="section" Text="OUTPUT CALCULATION" Margin="0,0,0,10" />
+            <Border Background="#111417" BorderBrush="#1F252B" BorderThickness="1" CornerRadius="7" Padding="14">
+              <StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,0,12">
+                  <StackPanel>
+                    <TextBlock Text="Original" FontSize="10.5" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
+                    <TextBlock Classes="mono" FontSize="15" Text="{Binding SourceSize}" />
+                  </StackPanel>
+                  <TextBlock Text="→" FontSize="15" Foreground="{DynamicResource Accent}" VerticalAlignment="Bottom" />
+                  <StackPanel>
+                    <TextBlock Text="Output" FontSize="10.5" Foreground="{DynamicResource TextDim}" Margin="0,0,0,2" />
+                    <TextBlock Classes="mono" FontSize="15" Text="{Binding OutputSize}"
+                               Foreground="{DynamicResource Accent}" />
+                  </StackPanel>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding OutputRows}" ItemTemplate="{StaticResource CardRowTemplate}" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
+      </Panel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

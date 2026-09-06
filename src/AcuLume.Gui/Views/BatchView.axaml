@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AcuLume.Gui.ViewModels"
+             x:Class="AcuLume.Gui.Views.BatchView"
+             x:DataType="vm:BatchViewModel">
+
+  <DockPanel Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Height="44" Background="{DynamicResource ToolbarBackground}"
+            BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1">
+      <Grid Margin="12,0" ColumnDefinitions="Auto,Auto,*,Auto">
+        <TextBlock Grid.Column="0" Classes="title" Text="Batch" VerticalAlignment="Center" Margin="0,0,10,0" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+          <Button Classes="ghost" Content="Add Images…" Click="OnAddImages" />
+          <Button Classes="ghost" Content="Add Folder…" Click="OnAddFolder" />
+          <Button Classes="link" Margin="6,0" Content="Remove" Command="{Binding RemoveSelectedCommand}" />
+          <Button Classes="link" Content="Clear" Command="{Binding ClearCommand}" />
+        </StackPanel>
+        <TextBlock Grid.Column="3" Classes="mono" FontSize="11" Text="{Binding SummaryText}"
+                   VerticalAlignment="Center" Foreground="#7C858D" />
+      </Grid>
+    </Border>
+
+    <!-- run panel -->
+    <Border DockPanel.Dock="Right" Width="300" Background="{DynamicResource PanelBackground}"
+            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1,0,0,0">
+      <DockPanel>
+
+        <Border DockPanel.Dock="Bottom" Background="#0E1013" BorderBrush="{DynamicResource PanelBorder}"
+                BorderThickness="0,1,0,0" Padding="16,12">
+          <StackPanel Spacing="8">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="Queue" FontSize="11.5" Foreground="{DynamicResource TextSecondary}" />
+              <TextBlock Grid.Column="1" Classes="mono" FontSize="11.5" Text="{Binding ProgressText}"
+                         Foreground="{DynamicResource Accent}" />
+            </Grid>
+            <ProgressBar Height="4" CornerRadius="2" Minimum="0" Maximum="1" Value="{Binding Progress}"
+                         Background="#1D2227" Foreground="{DynamicResource Accent}" />
+            <Button Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                    Content="{Binding RunButtonText}" Click="OnRun" IsEnabled="{Binding CanRun}" />
+            <TextBlock Classes="hint" Text="{Binding StatusText}" />
+          </StackPanel>
+        </Border>
+
+        <ScrollViewer Padding="16,14">
+          <StackPanel>
+            <TextBlock Classes="section" Text="PRESET" Margin="0,0,0,8" />
+            <ComboBox Classes="flat" HorizontalAlignment="Stretch" Margin="0,0,0,18"
+                      ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}" />
+
+            <TextBlock Classes="title" Text="Output" Margin="0,0,0,12" />
+            <ItemsControl ItemsSource="{Binding OutputSummary}" ItemTemplate="{StaticResource CardRowTemplate}"
+                          Margin="0,0,0,14" />
+
+            <TextBlock Classes="section" Text="OUTPUT FOLDER" Margin="0,0,0,8" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+              <Border Grid.Column="0" Background="{DynamicResource InsetBackground}" BorderBrush="#1F252B"
+                      BorderThickness="1" CornerRadius="5" Padding="9,6">
+                <TextBlock Classes="mono" FontSize="11" Foreground="#9AA3AB" TextTrimming="CharacterEllipsis"
+                           Text="{Binding OutputFolder, TargetNullValue='Not set'}" />
+              </Border>
+              <Button Grid.Column="1" Classes="ghost" Content="Choose…" Click="OnChooseFolder" />
+            </Grid>
+          </StackPanel>
+        </ScrollViewer>
+      </DockPanel>
+    </Border>
+
+    <!-- queue table -->
+    <DockPanel>
+      <Border DockPanel.Dock="Top" BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1"
+              Padding="14,8">
+        <Grid ColumnDefinitions="26,*,118,220" ColumnSpacing="10">
+          <TextBlock Grid.Column="1" Classes="section" Text="FILENAME" />
+          <TextBlock Grid.Column="2" Classes="section" Text="RESOLUTION" />
+          <TextBlock Grid.Column="3" Classes="section" Text="STATUS" />
+        </Grid>
+      </Border>
+
+      <Panel>
+        <TextBlock Text="Add images or a folder to build a queue"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{DynamicResource TextGhost}" IsVisible="{Binding !Items.Count}" />
+
+        <ScrollViewer>
+          <ItemsControl ItemsSource="{Binding Items}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:BatchItem">
+                <Border BorderBrush="#14181C" BorderThickness="0,0,0,1" Padding="14,6">
+                  <Grid ColumnDefinitions="26,*,118,220" ColumnSpacing="10" VerticalAlignment="Center">
+                    <CheckBox Grid.Column="0" Classes="compact" IsChecked="{Binding IsSelected}"
+                              VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Classes="mono" FontSize="11.5" Text="{Binding FileName}"
+                               Foreground="#D2D7DC" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="2" Classes="mono" FontSize="11" Text="{Binding Resolution}"
+                               Foreground="#8B939C" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                      <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                               Fill="{Binding Status, Converter={StaticResource StatusColor}}" />
+                      <TextBlock FontSize="11" Text="{Binding StatusDetail}" Foreground="#8B939C"
+                                 TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Panel>
+    </DockPanel>
+  </DockPanel>
+</UserControl>

@@ -1,0 +1,92 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AcuLume.Gui.ViewModels"
+             x:Class="AcuLume.Gui.Views.PresetsView"
+             x:DataType="vm:PresetsViewModel">
+
+  <DockPanel Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Height="44" Background="{DynamicResource ToolbarBackground}"
+            BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1">
+      <Grid Margin="12,0" ColumnDefinitions="Auto,*,Auto">
+        <TextBlock Grid.Column="0" Classes="title" Text="Presets" VerticalAlignment="Center" />
+        <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="11" Margin="14,0"
+                   VerticalAlignment="Center" Foreground="{DynamicResource TextDim}" />
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+          <Button Classes="ghost" Content="Import…" Click="OnImport" />
+          <Button Classes="ghost" Content="Export…" Click="OnExport" IsEnabled="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- details panel -->
+    <Border DockPanel.Dock="Right" Width="280" Background="{DynamicResource PanelBackground}"
+            BorderBrush="{DynamicResource PanelBorder}" BorderThickness="1,0,0,0">
+      <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Bottom" Spacing="10">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <Button Classes="ghost" Content="Duplicate" Command="{Binding DuplicateCommand}"
+                    IsEnabled="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <Button Classes="ghost" Content="Rename…" Click="OnRename" IsEnabled="{Binding CanEditSelected}" />
+            <Button Classes="ghost" Content="Delete" Command="{Binding DeleteCommand}"
+                    IsEnabled="{Binding CanEditSelected}" />
+          </StackPanel>
+          <TextBlock Classes="hint" Text="Built-in presets cannot be edited. Duplicate one to make it yours." />
+          <Button Classes="ghost" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="Save current Sharpen settings" Command="{Binding SaveCurrentSettingsCommand}" />
+          <Button Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                  Content="Apply to current image" Command="{Binding ApplyToCurrentImageCommand}"
+                  IsEnabled="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}" />
+        </StackPanel>
+
+        <StackPanel Spacing="12">
+          <StackPanel>
+            <TextBlock Classes="section" Text="SELECTED" Margin="0,0,0,8" />
+            <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6" TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextPrimary}" Text="{Binding Selected.Name}" />
+            <TextBlock Classes="hint" FontSize="11.5" Text="{Binding Selected.Description}" />
+          </StackPanel>
+          <Border Classes="divider" />
+          <ItemsControl ItemsSource="{Binding SelectedParameters}" ItemTemplate="{StaticResource CardRowTemplate}" />
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- card grid -->
+    <ScrollViewer Padding="20,18">
+      <StackPanel>
+        <StackPanel Margin="0,0,0,24">
+          <StackPanel Orientation="Horizontal" Spacing="9" Margin="0,0,0,10">
+            <TextBlock Classes="section" Text="BUILT-IN" VerticalAlignment="Center" />
+            <TextBlock Classes="mono" FontSize="10" Foreground="#3E464D" VerticalAlignment="Center"
+                       Text="{Binding BuiltIn.Count}" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding BuiltIn}" ItemTemplate="{StaticResource PresetCardTemplate}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+        </StackPanel>
+
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="9" Margin="0,0,0,10">
+            <TextBlock Classes="section" Text="USER" VerticalAlignment="Center" />
+            <TextBlock Classes="mono" FontSize="10" Foreground="#3E464D" VerticalAlignment="Center"
+                       Text="{Binding User.Count}" />
+          </StackPanel>
+          <ItemsControl ItemsSource="{Binding User}" ItemTemplate="{StaticResource PresetCardTemplate}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+          </ItemsControl>
+          <TextBlock Classes="hint" Text="No user presets yet — duplicate a built-in or save your Sharpen settings."
+                     IsVisible="{Binding !User.Count}" />
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

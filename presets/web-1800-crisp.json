@@ -1,6 +1,7 @@
 {
   "version": 1,
   "name": "web-1800-crisp",
+  "description": "Stronger web export at 1800 px for detailed subjects; watch high-contrast edges.",
   "experimental": true,
   "resize": {
     "enabled": true,

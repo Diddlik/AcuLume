@@ -15,6 +15,9 @@ public sealed record SharpenPreset
 
     public required string Name { get; init; }
 
+    /// <summary>Optional one-line summary shown in the GUI's preset library.</summary>
+    public string? Description { get; init; }
+
     /// <summary>Marks a preset as not yet calibrated against a real validation set (spec coding rule 13).</summary>
     public bool Experimental { get; init; }
 

@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Colour tokens transcribed from docs/AcuLume interactive app/AcuLume.dc.html. -->
+
+  <!-- Surfaces -->
+  <SolidColorBrush x:Key="AppBackground" Color="#0A0B0C" />
+  <SolidColorBrush x:Key="CanvasBackground" Color="#0B0C0E" />
+  <SolidColorBrush x:Key="PanelBackground" Color="#101215" />
+  <SolidColorBrush x:Key="ToolbarBackground" Color="#0D0F11" />
+  <SolidColorBrush x:Key="ControlBackground" Color="#161A1E" />
+  <SolidColorBrush x:Key="ControlBackgroundHover" Color="#191D22" />
+  <SolidColorBrush x:Key="ControlBackgroundActive" Color="#252B32" />
+  <SolidColorBrush x:Key="InsetBackground" Color="#14171B" />
+  <SolidColorBrush x:Key="OverlayBackground" Color="#B80A0B0C" />
+
+  <!-- Borders -->
+  <SolidColorBrush x:Key="PanelBorder" Color="#1E2227" />
+  <SolidColorBrush x:Key="SubtleBorder" Color="#1B1F24" />
+  <SolidColorBrush x:Key="ControlBorder" Color="#23282E" />
+  <SolidColorBrush x:Key="ControlBorderHover" Color="#33393F" />
+  <SolidColorBrush x:Key="TrackBackground" Color="#262B31" />
+
+  <!-- Text -->
+  <SolidColorBrush x:Key="TextPrimary" Color="#E9ECEF" />
+  <SolidColorBrush x:Key="TextSecondary" Color="#C8CDD3" />
+  <SolidColorBrush x:Key="TextMuted" Color="#98A1AA" />
+  <SolidColorBrush x:Key="TextDim" Color="#6E777F" />
+  <SolidColorBrush x:Key="TextFaint" Color="#5F686F" />
+  <SolidColorBrush x:Key="TextGhost" Color="#4E565D" />
+
+  <!-- Accent / status -->
+  <SolidColorBrush x:Key="Accent" Color="#59B0E8" />
+  <SolidColorBrush x:Key="AccentHover" Color="#8CCBF3" />
+  <SolidColorBrush x:Key="AccentButton" Color="#2C7FB8" />
+  <SolidColorBrush x:Key="AccentButtonHover" Color="#3792CF" />
+  <SolidColorBrush x:Key="Success" Color="#4FBF8B" />
+  <SolidColorBrush x:Key="Knob" Color="#EDF1F4" />
+
+  <!-- Typography -->
+  <FontFamily x:Key="UiFont">Inter, IBM Plex Sans, Segoe UI, sans-serif</FontFamily>
+  <FontFamily x:Key="MonoFont">IBM Plex Mono, Cascadia Mono, Consolas, monospace</FontFamily>
+
+</ResourceDictionary>

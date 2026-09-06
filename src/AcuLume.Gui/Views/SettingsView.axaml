@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:AcuLume.Gui.ViewModels"
+             x:Class="AcuLume.Gui.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <DockPanel Background="{DynamicResource AppBackground}">
+
+    <Border DockPanel.Dock="Top" Height="44" Background="{DynamicResource ToolbarBackground}"
+            BorderBrush="{DynamicResource SubtleBorder}" BorderThickness="0,0,0,1">
+      <TextBlock Classes="title" Text="Settings" Margin="12,0" VerticalAlignment="Center" />
+    </Border>
+
+    <ScrollViewer Padding="26,22">
+      <Grid ColumnDefinitions="*,*" ColumnSpacing="26" MaxWidth="900" HorizontalAlignment="Left">
+
+        <StackPanel Grid.Column="0" Spacing="24">
+          <StackPanel>
+            <TextBlock Classes="section" Text="PROCESSING" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding Processing}" ItemTemplate="{StaticResource InfoRowTemplate}" />
+          </StackPanel>
+          <StackPanel>
+            <TextBlock Classes="section" Text="STORAGE" Margin="0,0,0,10" />
+            <ItemsControl ItemsSource="{Binding Storage}" ItemTemplate="{StaticResource InfoRowTemplate}" />
+          </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1">
+          <TextBlock Classes="section" Text="KEYBOARD SHORTCUTS" Margin="0,0,0,10" />
+          <ItemsControl ItemsSource="{Binding Shortcuts}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:InfoRow">
+                <Border BorderBrush="#14181C" BorderThickness="0,0,0,1" Padding="0,6">
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock Grid.Column="0" Classes="label" FontSize="11.5" Text="{Binding Key}"
+                               VerticalAlignment="Center" />
+                    <Border Grid.Column="1" Background="{DynamicResource InsetBackground}"
+                            BorderBrush="#262C33" BorderThickness="1" CornerRadius="4" Padding="7,2">
+                      <TextBlock Classes="mono" FontSize="10.5" Text="{Binding Value}"
+                                 Foreground="{DynamicResource TextSecondary}" />
+                    </Border>
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>

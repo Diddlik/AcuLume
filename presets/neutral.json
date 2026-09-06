@@ -1,6 +1,7 @@
 {
   "version": 1,
   "name": "neutral",
+  "description": "No sharpening and no resize — a pass-through baseline for comparisons.",
   "resize": {
     "enabled": false
   },
