@@ -304,6 +304,21 @@ revisiting with RAW input and a measured or estimated PSF, which is out of scope
 Both engines stay in the tree, off by default, as the spec's separate experimental restoration
 engines — not folded into the stable path.
 
+## Open: the halo limiter barely engages
+
+Building the help illustrations produced a measurement worth acting on. Rendering the preset with
+`haloProtection` at 0 and at its calibrated value and taking the strongest 150 px window across seven
+photographs, the difference is **0.14 out of 255** — the stage is effectively inert in normal use.
+
+The reason is its limits, not its strength: `DarkLimit` 0.5 and `LightLimit` 0.3 cap overshoot at half
+and a third of the local contrast range, and the band contribution never reaches that. Tightening them
+to 0.1 and 0.05 makes it visible (4.68/255 on the same crop).
+
+So either the default limits are far too loose to ever bite, or the stage is in the wrong place in the
+pipeline to see the overshoot it is meant to cap. Both are testable with the method used for the noise
+protection analysis: sweep the limits, measure envelope overshoot and acutance across the corpus, and
+find out whether a tighter limiter buys anything the edge protection does not already provide.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
