@@ -6,7 +6,7 @@
     <AssemblyName>aculume-gui</AssemblyName>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets\aculume.ico</ApplicationIcon>
+    <ApplicationIcon>..\..\assets\aculume.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
@@ -24,7 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="Assets\**" />
+    <!-- Linked so the window icon and the executable icon come from one shared source. -->
+    <AvaloniaResource Include="..\..\assets\aculume-256.png" Link="Assets\aculume-256.png" />
   </ItemGroup>
 
   <ItemGroup>

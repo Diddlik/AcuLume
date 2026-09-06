@@ -38,7 +38,7 @@ dotnet publish (Join-Path $root 'src/AcuLume.Cli/AcuLume.Cli.csproj') `
     --configuration Release --runtime $Runtime --self-contained true `
     -p:Version=$Version --output $stage
 
-$icon = Join-Path $root 'src/AcuLume.Gui/Assets/aculume.ico'
+$icon = Join-Path $root 'assets/aculume.ico'
 
 dotnet vpk pack `
     --packId AcuLume `

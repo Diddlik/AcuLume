@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>AcuLume.Cli</RootNamespace>
     <AssemblyName>aculume</AssemblyName>
+    <ApplicationIcon>..\..\assets\aculume.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

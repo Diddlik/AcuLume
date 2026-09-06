@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/AcuLume.Gui/Assets/aculume-256.png" width="96" alt="AcuLume">
+<img src="assets/aculume-256.png" width="96" alt="AcuLume">
 
 # AcuLume
 
