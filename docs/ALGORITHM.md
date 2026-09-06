@@ -181,6 +181,50 @@ comparison against the reference mask (78 of 80 photographs), so it is not badly
 but it is the preset most likely to turn near-Nyquist texture into an artefact, and it renders hair
 with a wiry, etched edge that `natural` does not.
 
+## Resize research (Phase 3)
+
+`ResizeEngine` takes two experimental axes (spec section 47), both non-default and CLI-only via
+`--resize-strategy` and `--resize-space`:
+
+- **Strategy** — `Single` (one Lanczos 3 step) or `Staged` (repeated halving, then a final step sized
+  from the target dimensions so chained rounding cannot drift off the requested long edge).
+- **Space** — `Gamma` (resample the encoded values) or `LinearLight` (convert to scRGB, resample,
+  convert back), the physically correct averaging.
+
+### Method
+
+Each candidate is compared against an *ideal* downscale of the same photograph: the source luminance
+is linearised, its spectrum truncated to the target size by FFT, and the result re-encoded. That is a
+brick-wall low-pass, so it is alias-free by construction, and anything a candidate adds is resampling
+error. The low-frequency component of that error (Gaussian sigma 3) is what reads as moire. The ground
+truth is computed in linear light deliberately: evaluating a linear-light resize against a gamma-space
+reference would rig the comparison, as a first pass of this measurement did.
+
+### Results (20 photographs, 1800 px long edge)
+
+| strategy / space | total error | low-frequency error | vs. default |
+|---|---|---|---|
+| `Single` / `Gamma` (default) | 0.02363 | 0.00835 | — |
+| `Staged` / `Gamma` | 0.02388 | 0.00831 | -0.5% |
+| `Single` / `LinearLight` | 0.02383 | 0.00820 | -1.8% |
+| `Staged` / `LinearLight` | 0.02417 | 0.00820 | -1.8% |
+
+**Neither justifies a default change, so the defaults are unchanged.**
+
+Staged downscaling buys nothing measurable, and the reason is mechanical: libvips' `resize` already
+performs an integer block shrink before the kernel reduce for large downscale factors, so the single
+step is *already* staged and band-limited internally. An explicit halving chain duplicates it.
+
+Linear light gives a consistent but tiny reduction in low-frequency error, and the difference is not
+visible side by side even on the worst moire case in the corpus.
+
+A pre-resize low-pass was simulated as well, since it is the obvious remaining lever: sigma 0.3-1.2
+moved the low-frequency error by at most -0.8% while costing up to 36% of the fine-band detail. It
+was not implemented.
+
+The honest conclusion is that the downscale is not where this pipeline's remaining quality problems
+live.
+
 ## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).

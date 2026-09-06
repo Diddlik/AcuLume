@@ -34,7 +34,7 @@ public sealed class AcuLumeProcessor
         var processed = image;
         if (options.LongEdge is { } longEdge)
         {
-            processed = Resize(inputPath, processed, longEdge, options.AllowUpscale);
+            processed = Resize(inputPath, processed, longEdge, options);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -76,11 +76,12 @@ public sealed class AcuLumeProcessor
         }
     }
 
-    private static NetVips.Image Resize(string inputPath, NetVips.Image image, int longEdge, bool allowUpscale)
+    private static NetVips.Image Resize(string inputPath, NetVips.Image image, int longEdge, ProcessingOptions options)
     {
         try
         {
-            return ResizeEngine.ResizeToLongEdge(image, longEdge, allowUpscale);
+            return ResizeEngine.ResizeToLongEdge(
+                image, longEdge, options.AllowUpscale, options.ResizeStrategy, options.ResizeSpace);
         }
         catch (Exception ex)
         {

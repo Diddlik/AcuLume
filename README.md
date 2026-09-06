@@ -91,6 +91,7 @@ the tool writes `<name>.aculume<ext>` next to the input.
 |---|---|
 | `--preset <name\|path>` | Built-in preset name or a path to a preset JSON file |
 | `--long-edge <px>`, `--allow-upscale` | Output size; upscaling is off by default |
+| `--resize-strategy <single\|staged>`, `--resize-space <gamma\|linearlight>` | Experimental resize research (spec Phase 3); defaults are `single` and `gamma` |
 | `--quality <1-100>` | JPEG quality |
 | `--fine-radius`, `--fine-amount` | Fine band — micro-texture |
 | `--medium-radius`, `--medium-amount` | Medium band — structure and shape |
@@ -165,11 +166,11 @@ Phase 1 of the specification is complete — the full adaptive multi-frequency p
 - **Phase 2 — calibration.** Presets calibrated against 200 photographs from two camera bodies:
   `web-1800-natural` overshoots ~31% less per unit of sharpening than a reference unsharp mask, in 79
   of 80 photographs, and pushes ~20x fewer pixels into clipping (method and numbers in
-  [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). `web-1800-crisp` stays experimental: it amplifies
-  near-Nyquist texture hardest, and on subjects that already moiré at the output size that is an
-  artefact, not detail.
-- **Phase 3 — resize research.** Single vs. staged downscaling, gamma vs. linear-light. Staged
-  downscaling is the real fix for the moiré amplification above — aliasing has to be suppressed
-  before the sharpener sees it, because afterwards it is indistinguishable from detail.
+  [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). `web-1800-crisp` stays experimental: it amplifies fine
+  texture hardest, which on a subject carrying sensor moiré amplifies the moiré too.
+- **Phase 3 — resize research.** Done, with a negative result: staged downscaling and linear-light
+  resampling were implemented, measured against an ideal FFT downscale, and neither earns a default
+  change — libvips already shrinks in stages internally, and the moiré turned out to come from the
+  camera sensor, not the resize.
 - **Phase 4 — advanced restoration.** Wiener / Richardson-Lucy as optional capture sharpening.
 - **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.

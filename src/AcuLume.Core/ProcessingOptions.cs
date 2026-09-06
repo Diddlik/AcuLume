@@ -1,3 +1,4 @@
+using AcuLume.Core.Imaging;
 using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Core;
@@ -9,6 +10,12 @@ public sealed record ProcessingOptions
     public int? LongEdge { get; init; }
 
     public bool AllowUpscale { get; init; }
+
+    /// <summary>Downscale strategy. Experimental (spec Phase 3); the default is unchanged.</summary>
+    public ResizeStrategy ResizeStrategy { get; init; } = ResizeStrategy.Single;
+
+    /// <summary>Encoding the resampling happens in. Experimental (spec Phase 3); the default is unchanged.</summary>
+    public ResizeSpace ResizeSpace { get; init; } = ResizeSpace.Gamma;
 
     /// <summary>JPEG quality (1-100). Ignored for lossless formats.</summary>
     public int Quality { get; init; } = 90;

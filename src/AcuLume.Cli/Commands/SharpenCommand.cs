@@ -1,6 +1,7 @@
 using System.CommandLine;
 using AcuLume.Core;
 using AcuLume.Core.Configuration;
+using AcuLume.Core.Imaging;
 using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Cli.Commands;
@@ -21,6 +22,8 @@ public static class SharpenCommand
         var outputOption = new Option<FileInfo?>("--output", "-o");
         var qualityOption = new Option<int?>("--quality");
         var allowUpscaleOption = new Option<bool>("--allow-upscale");
+        var resizeStrategyOption = new Option<ResizeStrategy?>("--resize-strategy");
+        var resizeSpaceOption = new Option<ResizeSpace?>("--resize-space");
         var fineRadiusOption = new Option<double?>("--fine-radius");
         var fineAmountOption = new Option<double?>("--fine-amount");
         var mediumRadiusOption = new Option<double?>("--medium-radius");
@@ -46,6 +49,8 @@ public static class SharpenCommand
         command.Add(outputOption);
         command.Add(qualityOption);
         command.Add(allowUpscaleOption);
+        command.Add(resizeStrategyOption);
+        command.Add(resizeSpaceOption);
         command.Add(fineRadiusOption);
         command.Add(fineAmountOption);
         command.Add(mediumRadiusOption);
@@ -96,6 +101,8 @@ public static class SharpenCommand
             var longEdge = parseResult.GetValue(longEdgeOption) ?? baseOptions.LongEdge;
             var quality = parseResult.GetValue(qualityOption) ?? baseOptions.Quality;
             var allowUpscale = parseResult.GetValue(allowUpscaleOption) || baseOptions.AllowUpscale;
+            var resizeStrategy = parseResult.GetValue(resizeStrategyOption) ?? baseOptions.ResizeStrategy;
+            var resizeSpace = parseResult.GetValue(resizeSpaceOption) ?? baseOptions.ResizeSpace;
 
             var baseFine = baseOptions.OutputSharpen.Fine;
             var baseMedium = baseOptions.OutputSharpen.Medium;
@@ -109,6 +116,8 @@ public static class SharpenCommand
             {
                 LongEdge = longEdge,
                 AllowUpscale = allowUpscale,
+                ResizeStrategy = resizeStrategy,
+                ResizeSpace = resizeSpace,
                 Quality = quality,
                 OutputSharpen = new OutputSharpenOptions
                 {
