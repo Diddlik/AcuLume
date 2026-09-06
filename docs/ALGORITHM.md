@@ -290,6 +290,12 @@ engines — not folded into the stable path.
 - Output-size-aware radius scaling, batch command (the GUI has one), debug image export.
 - Wiener and PSF-estimating deconvolution — see the Phase 4 result above for why.
 
-This completes spec Tasks 1-9 (the full Phase 1 output-sharpening pipeline, presets, and
-comparison tooling). Remaining work is Phase 2 (empirical calibration against a real photo
-validation set) and later phases (resize research, advanced restoration, distribution).
+Spec phases 1-4 are done: the output-sharpening pipeline, presets and comparison tooling; the
+calibration above; the resize research; and capture sharpening with a deconvolution engine. Phase 5
+(self-contained Windows x64 and Linux x64 builds) has not been started.
+
+One correctness item outlives them: `Colourspace(Lab)` assumes sRGB primaries and transfer, so for an
+AdobeRGB or Display-P3 input the luminance the bands operate on is slightly wrong. The error largely
+cancels because the round trip makes the same assumption in both directions, but converting into a
+defined working space after load and back before write would change exported pixels and require
+recalibrating the presets.
