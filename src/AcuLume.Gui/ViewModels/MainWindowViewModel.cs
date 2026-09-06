@@ -32,6 +32,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         ImageInfo = new ImageInfoViewModel(Sharpen);
         Settings = new SettingsViewModel(_library);
 
+        Sharpen.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(SharpenViewModel.FileName))
+            {
+                OnPropertyChanged(nameof(WindowTitle));
+            }
+        };
+
         SyncNavigation();
     }
 
@@ -71,6 +79,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public bool IsImageInfoActive => ActiveSection == Section.ImageInfo;
 
     public bool IsSettingsActive => ActiveSection == Section.Settings;
+
+    public string WindowTitle => Sharpen.HasImage ? $"{Sharpen.FileName} — AcuLume" : "AcuLume";
 
     public string VersionLine => $"AcuLume {AppInfo.Version} · Local processing";
 

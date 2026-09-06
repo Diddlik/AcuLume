@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="880" viewBox="0 0 1160 880" role="img" aria-label="AcuLume processing pipeline: resize to output size, split the luminance into frequency bands, apply asymmetric dark and light detail, protect edges and noise, limit halos, then write the file.">
+
+  <rect x="0" y="0" width="1160" height="880" rx="14" fill="#0E1115"/>
+
+  <!-- ================= HEADER ================= -->
+  <g transform="translate(40,42)">
+    <path d="M13 2 L24 25 L2 25 Z" fill="none" stroke="#3A8CFF" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M13 2 V25" stroke="#EDF1F4" stroke-width="1.6"/>
+    <path d="M6.4 19.5 H19.6" stroke="#EDF1F4" stroke-width="1.6" opacity="0.7"/>
+  </g>
+  <text x="82" y="58" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="23" font-weight="600" fill="#EDF1F4" letter-spacing="0.4">How AcuLume sharpens</text>
+  <text x="82" y="82" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" fill="#9AA3AB">Sharpening happens <tspan fill="#3A8CFF" font-weight="600">after</tspan> the image is at its final size — the only size where &#8220;sharp&#8221; is a well-defined amount.</text>
+
+  <!-- ================= 1 · PREPARE ================= -->
+  <text x="40" y="132" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6B747C" letter-spacing="2.2">1 · PREPARE</text>
+
+  <g>
+    <rect x="40" y="148" width="330" height="86" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="60" y="180" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#EDF1F4">Source file</text>
+    <text x="60" y="203" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#9AA3AB">JPEG · PNG · TIFF · WebP</text>
+    <text x="60" y="221" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">EXIF orientation baked into pixels</text>
+  </g>
+
+  <path d="M378 191 H400" stroke="#3A8CFF" stroke-width="1.6"/>
+  <path d="M396 186 L404 191 L396 196 Z" fill="#3A8CFF"/>
+
+  <g>
+    <rect x="412" y="148" width="330" height="86" rx="9" fill="#151A20" stroke="#3A8CFF" stroke-opacity="0.55"/>
+    <text x="432" y="180" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#EDF1F4">Resize to the output size</text>
+    <text x="432" y="203" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#3A8CFF">3447 × 5170  →  1200 × 1800</text>
+    <text x="432" y="221" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">Lanczos 3 · never upscales</text>
+  </g>
+
+  <path d="M750 191 H772" stroke="#3A8CFF" stroke-width="1.6"/>
+  <path d="M768 186 L776 191 L768 196 Z" fill="#3A8CFF"/>
+
+  <g>
+    <rect x="784" y="148" width="336" height="86" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="804" y="180" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="14.5" font-weight="600" fill="#EDF1F4">Work on luminance only</text>
+    <text x="804" y="203" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#9AA3AB">sRGB → Lab, L channel, 32-bit float</text>
+    <text x="804" y="221" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">no per-channel colour fringing</text>
+  </g>
+
+  <!-- ================= 2 · SPLIT ================= -->
+  <text x="40" y="290" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6B747C" letter-spacing="2.2">2 · SPLIT INTO FREQUENCY BANDS</text>
+
+  <rect x="40" y="336" width="74" height="60" rx="9" fill="#1A2029" stroke="#232B33"/>
+  <text x="77" y="372" text-anchor="middle" font-family="ui-monospace, Consolas, monospace" font-size="17" fill="#EDF1F4">L</text>
+
+  <path d="M120 356 C 152 356, 152 336, 184 336" fill="none" stroke="#3A8CFF" stroke-width="1.5"/>
+  <path d="M120 376 C 152 376, 152 428, 184 428" fill="none" stroke="#3A8CFF" stroke-width="1.5" opacity="0.6"/>
+
+  <g>
+    <rect x="188" y="306" width="330" height="62" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="208" y="332" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Fine band</text>
+    <text x="208" y="353" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#9AA3AB">radius 0.35 px · amount 1.00</text>
+    <text x="498" y="343" text-anchor="end" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" fill="#6B747C">micro-texture</text>
+  </g>
+
+  <g>
+    <rect x="188" y="398" width="330" height="62" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="208" y="424" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Medium band</text>
+    <text x="208" y="445" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#9AA3AB">radius 0.90 px · amount 0.30</text>
+    <text x="498" y="435" text-anchor="end" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" fill="#6B747C">structure &amp; shape</text>
+  </g>
+
+  <path d="M526 337 H548" stroke="#3A8CFF" stroke-width="1.5"/>
+  <path d="M544 332 L552 337 L544 342 Z" fill="#3A8CFF"/>
+  <path d="M526 429 H548" stroke="#3A8CFF" stroke-width="1.5" opacity="0.6"/>
+  <path d="M544 424 L552 429 L544 434 Z" fill="#3A8CFF" opacity="0.6"/>
+
+  <!-- asymmetric split -->
+  <g>
+    <rect x="560" y="306" width="264" height="154" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="580" y="332" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Asymmetric detail</text>
+
+    <text x="580" y="364" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">Dark detail</text>
+    <rect x="580" y="372" width="180" height="7" rx="3.5" fill="#232B33"/>
+    <rect x="580" y="372" width="144" height="7" rx="3.5" fill="#3A8CFF"/>
+    <text x="804" y="371" text-anchor="end" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#EDF1F4">0.80</text>
+
+    <text x="580" y="410" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">Light detail</text>
+    <rect x="580" y="418" width="180" height="7" rx="3.5" fill="#232B33"/>
+    <rect x="580" y="418" width="90" height="7" rx="3.5" fill="#7FB2F0"/>
+    <text x="804" y="417" text-anchor="end" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#EDF1F4">0.50</text>
+
+    <text x="580" y="446" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" fill="#6B747C">bright halos are the visible ones</text>
+  </g>
+
+  <g>
+    <rect x="844" y="306" width="276" height="154" rx="9" fill="#12171D" stroke="#232B33" stroke-dasharray="4 4"/>
+    <text x="864" y="334" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#9AA3AB">Why two bands?</text>
+    <text x="864" y="360" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">One radius has to choose between</text>
+    <text x="864" y="379" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">crisp texture and solid structure.</text>
+    <text x="864" y="404" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">Two radii, mixed separately, give</text>
+    <text x="864" y="423" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">acutance without the crunchy edge</text>
+    <text x="864" y="442" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#6B747C">signature of a single unsharp mask.</text>
+  </g>
+
+  <!-- ================= 3 · PROTECT ================= -->
+  <text x="40" y="518" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6B747C" letter-spacing="2.2">3 · PROTECT — WHERE SHARPENING IS PULLED BACK</text>
+
+  <g>
+    <rect x="40" y="536" width="346" height="128" rx="9" fill="#151A20" stroke="#232B33"/>
+    <circle cx="66" cy="566" r="4.5" fill="#3A8CFF"/>
+    <text x="82" y="571" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Edge protection</text>
+    <text x="60" y="600" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">A gradient mask attenuates gain along</text>
+    <text x="60" y="619" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">strong edges, where halos form first.</text>
+    <text x="60" y="646" font-family="ui-monospace, Consolas, monospace" font-size="11.5" fill="#6B747C">edgeProtection 0.65</text>
+  </g>
+
+  <g>
+    <rect x="406" y="536" width="346" height="128" rx="9" fill="#151A20" stroke="#232B33"/>
+    <circle cx="432" cy="566" r="4.5" fill="#4FB477"/>
+    <text x="448" y="571" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Noise protection</text>
+    <text x="426" y="600" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">A soft threshold drops detail below the</text>
+    <text x="426" y="619" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">grain floor instead of amplifying it.</text>
+    <text x="426" y="646" font-family="ui-monospace, Consolas, monospace" font-size="11.5" fill="#6B747C">noiseProtection 0.45</text>
+  </g>
+
+  <g>
+    <rect x="772" y="536" width="348" height="128" rx="9" fill="#151A20" stroke="#232B33"/>
+    <circle cx="798" cy="566" r="4.5" fill="#E2A03F"/>
+    <text x="814" y="571" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Halo limiter</text>
+    <text x="792" y="600" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">Overshoot is capped at a fraction of local</text>
+    <text x="792" y="619" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">contrast, so bright rims never clip.</text>
+    <text x="792" y="646" font-family="ui-monospace, Consolas, monospace" font-size="11.5" fill="#6B747C">haloProtection 0.70</text>
+  </g>
+
+  <!-- ================= 4 · WRITE ================= -->
+  <text x="40" y="722" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6B747C" letter-spacing="2.2">4 · WRITE</text>
+
+  <g>
+    <rect x="40" y="738" width="330" height="80" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="60" y="770" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Recombine</text>
+    <text x="60" y="793" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">bands merged into L, Lab → sRGB</text>
+  </g>
+
+  <path d="M378 778 H400" stroke="#3A8CFF" stroke-width="1.6"/>
+  <path d="M396 773 L404 778 L396 783 Z" fill="#3A8CFF"/>
+
+  <g>
+    <rect x="412" y="738" width="330" height="80" rx="9" fill="#151A20" stroke="#232B33"/>
+    <text x="432" y="770" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">Encode</text>
+    <text x="432" y="793" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" fill="#9AA3AB">JPEG q90 · EXIF and ICC preserved</text>
+  </g>
+
+  <path d="M750 778 H772" stroke="#3A8CFF" stroke-width="1.6"/>
+  <path d="M768 773 L776 778 L768 783 Z" fill="#3A8CFF"/>
+
+  <g>
+    <rect x="784" y="738" width="336" height="80" rx="9" fill="#151A20" stroke="#3A8CFF" stroke-opacity="0.55"/>
+    <text x="804" y="770" font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5" font-weight="600" fill="#EDF1F4">New file, never the original</text>
+    <text x="804" y="793" font-family="ui-monospace, Consolas, monospace" font-size="12" fill="#3A8CFF">photo.aculume.jpg</text>
+  </g>
+
+  <!-- ================= FOOTER CHIPS ================= -->
+  <g font-family="ui-sans-serif, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5" fill="#6B747C">
+    <text x="40" y="850">Deterministic — same input + preset + version ⇒ byte-identical output</text>
+    <text x="1120" y="850" text-anchor="end">No cloud · no AI · no telemetry · everything runs locally</text>
+  </g>
+
+</svg>

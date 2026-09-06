@@ -6,3 +6,6 @@ obj/
 # Design-canvas mockup, unrelated to the CLI implementation
 /docs/AcuLume interactive app/
 /docs/AcuLume interactive app.zip
+
+# Local test photos, not part of the repository
+/samples/

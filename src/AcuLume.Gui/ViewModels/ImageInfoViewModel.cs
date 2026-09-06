@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using AcuLume.Core.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -86,7 +87,7 @@ public sealed partial class ImageInfoViewModel(SharpenViewModel sharpen) : Obser
         {
             if (metadata.Exif.TryGetValue(tag, out var value) && value.Length > 0)
             {
-                CaptureRows.Add(new InfoRow(label, value));
+                CaptureRows.Add(new InfoRow(label, FormatExif(tag, value)));
             }
         }
 
@@ -112,6 +113,36 @@ public sealed partial class ImageInfoViewModel(SharpenViewModel sharpen) : Obser
         OutputRows.Add(new InfoRow("Sharpening space", "Lab L channel"));
         OutputRows.Add(new InfoRow("JPEG quality", sharpen.Quality.ToString()));
         OutputRows.Add(new InfoRow("Metadata", "Preserved (EXIF + ICC)"));
+    }
+
+    /// <summary>
+    /// EXIF stores exposure values as rationals ("85/1", "22/10"), which libvips passes through
+    /// verbatim. Photographers read them as "85 mm" and "f/2.2".
+    /// </summary>
+    internal static string FormatExif(string tag, string value) => tag switch
+    {
+        "FocalLength" when Rational(value) is { } mm => $"{mm:0.#} mm",
+        "FNumber" when Rational(value) is { } f => $"f/{f:0.#}",
+        "ExposureTime" when Rational(value) is { } seconds => seconds >= 1
+            ? $"{seconds:0.#} s"
+            : $"1/{Math.Round(1 / seconds)} s",
+        "DateTimeOriginal" => value.Length >= 10 ? string.Concat(value[..10].Replace(':', '-'), value[10..]) : value,
+        _ => value,
+    };
+
+    private static double? Rational(string value)
+    {
+        var slash = value.IndexOf('/');
+        if (slash < 0)
+        {
+            return double.TryParse(value, CultureInfo.InvariantCulture, out var plain) ? plain : null;
+        }
+
+        return double.TryParse(value[..slash], CultureInfo.InvariantCulture, out var numerator)
+               && double.TryParse(value[(slash + 1)..], CultureInfo.InvariantCulture, out var denominator)
+               && denominator != 0
+            ? numerator / denominator
+            : null;
     }
 
     private static string FormatBytes(long bytes) => bytes switch
