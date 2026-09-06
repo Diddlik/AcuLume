@@ -16,11 +16,26 @@ public sealed partial class SharpenView : UserControl
 
     private bool _draggingSplit;
 
+    private bool _panning;
+    private Point _panOrigin;
+    private Vector _panStartOffset;
+
     public SharpenView()
     {
         InitializeComponent();
 
-        PreviewViewport.SizeChanged += (_, _) => UpdatePreviewSize();
+        PreviewViewport.SizeChanged += (_, _) =>
+        {
+            UpdatePreviewSize();
+            UpdatePanCursor();
+        };
+        // Zoom changes resize the host rather than the viewport, so the cursor hint needs its own
+        // trigger — Extent is only current after that layout pass.
+        PreviewHost.SizeChanged += (_, _) => UpdatePanCursor();
+        PreviewViewport.PointerPressed += OnViewportPointerPressed;
+        PreviewViewport.PointerMoved += OnViewportPointerMoved;
+        PreviewViewport.PointerReleased += OnViewportPointerReleased;
+        PreviewViewport.PointerExited += (_, _) => UpdatePanCursor();
         DataContextChanged += (_, _) => AttachViewModel();
     }
 
@@ -223,6 +238,67 @@ public sealed partial class SharpenView : UserControl
     {
         _draggingSplit = false;
         e.Pointer.Capture(null);
+    }
+
+    /// <summary>True once the image is larger than the viewport — at Fit there is nothing to pan.</summary>
+    private bool CanPan =>
+        PreviewViewport.Extent.Width - PreviewViewport.Viewport.Width > 0.5 ||
+        PreviewViewport.Extent.Height - PreviewViewport.Viewport.Height > 0.5;
+
+    private void UpdatePanCursor() =>
+        PreviewViewport.Cursor = new Cursor(_panning
+            ? StandardCursorType.SizeAll
+            : CanPan ? StandardCursorType.Hand : StandardCursorType.Arrow);
+
+    private void OnViewportPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // The split handle sits inside the viewport and captures the pointer first; dragging it
+        // must move the split, not the image underneath it.
+        if (_draggingSplit || !CanPan)
+        {
+            return;
+        }
+
+        var point = e.GetCurrentPoint(PreviewViewport);
+        if (!point.Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        _panning = true;
+        _panOrigin = point.Position;
+        _panStartOffset = PreviewViewport.Offset;
+        e.Pointer.Capture(PreviewViewport);
+        UpdatePanCursor();
+    }
+
+    private void OnViewportPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_panning)
+        {
+            return;
+        }
+
+        // Drag the image with the pointer: moving right reveals what is to the left, so the scroll
+        // offset moves against the gesture.
+        var delta = e.GetPosition(PreviewViewport) - _panOrigin;
+        var maxX = Math.Max(0, PreviewViewport.Extent.Width - PreviewViewport.Viewport.Width);
+        var maxY = Math.Max(0, PreviewViewport.Extent.Height - PreviewViewport.Viewport.Height);
+        PreviewViewport.Offset = new Vector(
+            Math.Clamp(_panStartOffset.X - delta.X, 0, maxX),
+            Math.Clamp(_panStartOffset.Y - delta.Y, 0, maxY));
+    }
+
+    private void OnViewportPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_panning)
+        {
+            return;
+        }
+
+        _panning = false;
+        e.Pointer.Capture(null);
+        UpdatePanCursor();
     }
 
     private void MoveSplit(double x)

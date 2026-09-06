@@ -46,7 +46,7 @@ wide-gamut display does not show everything oversaturated.
 
 | Screen | What it does |
 |---|---|
-| **Sharpen** | Live preview with before / after / split view, zoom at fit · 100% · 200%, every parameter as a slider, one-click export |
+| **Sharpen** | Live preview with before / after / split view, zoom at fit · 100% · 200% with drag-to-pan, every parameter as a slider, one-click export |
 | **Batch** | Queue files or a folder, one preset, progress and cancel |
 | **Presets** | Built-in presets plus your own library under `%APPDATA%/AcuLume/presets`, import / export / duplicate / rename / delete |
 | **Compare** | The five-variant set — original, resize-only, USM baseline, AcuLume natural, AcuLume crisp — side by side |
