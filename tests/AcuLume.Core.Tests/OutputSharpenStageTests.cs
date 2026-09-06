@@ -40,6 +40,41 @@ public class OutputSharpenStageTests
             $"Expected undershoot ({undershoot}) > overshoot ({overshoot}) since darkAmount > lightAmount");
     }
 
+    /// <summary>
+    /// Regression: the built-in presets use a sub-pixel fine radius, and libvips' default Gaussian
+    /// truncation turned that band into an exact no-op — the amount could be raised arbitrarily
+    /// with byte-identical output. The band must react to both radius and amount at 0.35 px.
+    /// </summary>
+    [Theory]
+    [InlineData(BandSharpenOptions.MinimumRadius)]
+    [InlineData(0.6)]
+    [InlineData(0.9)]
+    public void Apply_ScalesWithAmount_AtSubPixelRadii(double radius)
+    {
+        const int halfWidth = 40;
+        const int height = 20;
+
+        using var edge = MakeStepEdge(halfWidth, height, darkValue: 50, lightValue: 200);
+
+        double MeanChange(double amount)
+        {
+            var options = new OutputSharpenOptions
+            {
+                Fine = new BandSharpenOptions { Radius = radius, Amount = amount, DarkAmount = 0.8, LightAmount = 0.5 },
+            };
+            using var sharpened = OutputSharpenStage.Apply(edge, options);
+            using var difference = (sharpened - edge).Abs();
+            return difference.Avg();
+        }
+
+        var single = MeanChange(1.0);
+        var doubled = MeanChange(2.0);
+
+        Assert.True(single > 0, $"Fine band at radius {radius} left the image untouched");
+        Assert.True(doubled > single * 1.5,
+            $"Doubling the amount barely changed the result: {single} -> {doubled}");
+    }
+
     [Fact]
     public void Apply_IsNoOp_WhenNoBandIsEnabled()
     {

@@ -5,6 +5,13 @@ namespace AcuLume.Core.Sharpening;
 /// </summary>
 public sealed record BandSharpenOptions
 {
+    /// <summary>
+    /// Smallest sigma whose Gaussian kernel still reliably differs from an identity blur. Below it
+    /// the high-pass collapses to zero and the band does nothing at all, silently — measured against
+    /// libvips 8.18 with the settings <see cref="FrequencyBandExtractor"/> uses.
+    /// </summary>
+    public const double MinimumRadius = 0.35;
+
     /// <summary>Gaussian sigma (px) used for the high-pass extraction.</summary>
     public required double Radius { get; init; }
 
@@ -21,9 +28,11 @@ public sealed record BandSharpenOptions
 
     public void Validate()
     {
-        if (Radius <= 0)
+        if (Radius < MinimumRadius)
         {
-            throw new ArgumentOutOfRangeException(nameof(Radius), "Radius must be positive.");
+            throw new ArgumentOutOfRangeException(
+                nameof(Radius),
+                $"Radius must be at least {MinimumRadius} px; below that the band produces no detail at all.");
         }
 
         if (Amount < 0)

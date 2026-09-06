@@ -36,6 +36,29 @@ public class CropGeneratorTests : IDisposable
     }
 
     [Fact]
+    public void Generate_ScalesCropToEachVariantResolution()
+    {
+        var originalPath = Path.Combine(_tempDir, "original.jpg");
+        var resizedPath = Path.Combine(_tempDir, "resized.jpg");
+        CreateTestImage(originalPath, 400, 400);
+        CreateTestImage(resizedPath, 100, 100);
+
+        var variants = new[]
+        {
+            new ComparisonVariant("original", originalPath),
+            new ComparisonVariant("resized", resizedPath),
+        };
+        var crops = new[] { new CropSpec("center", 100, 100, 80, 80) };
+
+        var generated = CropGenerator.Generate(variants, crops, _tempDir);
+
+        using var originalCrop = Image.NewFromFile(generated[0]);
+        using var resizedCrop = Image.NewFromFile(generated[1]);
+        Assert.Equal(80, originalCrop.Width);
+        Assert.Equal(20, resizedCrop.Width);
+    }
+
+    [Fact]
     public void Generate_ClampsCropToImageBounds()
     {
         var variantPath = Path.Combine(_tempDir, "v1.jpg");
