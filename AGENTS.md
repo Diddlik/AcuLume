@@ -114,7 +114,12 @@ polling, and an update check is the only network request the application makes. 
 
 GUI help strips: each Sharpen section can expand a before/after pair rendered from the real engine by
 `build/generate-help-images.ps1` (source photographs are not in the repository; the generated PNGs
-are). Most settings move a 150 px crop by only one to three levels out of 255 at their calibrated
+are). Choosing regions by maximum measured difference reliably lands on gravel, grass and foliage —
+sharpening acts on fine detail, so the most-changed window is always the least photogenic one, and
+portrait subjects cannot illustrate these settings at all (on eyes and skin even a fiftyfold fine
+amount moves the crop by 0.4/255). The regions are therefore architectural stonework, cropped tight
+and doubled with nearest-neighbour so a 2-6/255 difference is legible. Most settings move a crop by
+only one to three levels out of 255 at their calibrated
 values, so those pairs are rendered past the preset and say so in the panel — `medium` and `edge` are
 strong enough to be shown at their real values, and that split must stay in sync between the script
 and `HelpTopic.IsExaggerated`. The script warns when a pair falls below 0.5/255 so a recalibration
