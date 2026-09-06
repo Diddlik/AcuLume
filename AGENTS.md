@@ -89,6 +89,15 @@ change invalidates the resize below it.
 
 GUI status: all six screens are implemented — Sharpen (live preview, before/after/split, export), Batch (queue, progress, cancel), Presets (built-in + user library under `%APPDATA%/AcuLume/presets`, import/export/duplicate/rename/delete), Compare (the spec's five-variant comparison set), Image Info and Settings.
 
+GUI colour management: Windows does not colour-manage ordinary SDR windows, so on a wide-gamut
+display even correct sRGB renders oversaturated. `DisplayProfile` resolves the primary monitor's ICC
+profile (`GetICMProfileW`) and `PreviewRenderer.ToBitmap` converts into it, stripping the profile from
+the bitmap handed to Avalonia so nothing converts a second time; untagged images are taken as sRGB and
+every failure path falls back to the untransformed image. ~1 ms per 1200x1800 frame, so it is not
+cached. This is display-only — exported files keep their own pixels and their own profile and must
+never be converted into a monitor profile. Per-monitor handling and Linux (X11 `_ICC_PROFILE` /
+colord) are not implemented.
+
 GUI layout constraint: never nest a `ListBox` (or any control with its own `ScrollViewer`) inside a page `ScrollViewer` that gives it unbounded height — layout recurses until the process dies with no managed exception and no event-log entry. Use an `ItemsControl` and put selection state on the item view model instead.
 
 ## Definition of done

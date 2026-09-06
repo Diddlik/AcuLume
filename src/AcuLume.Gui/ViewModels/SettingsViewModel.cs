@@ -17,6 +17,9 @@ public sealed class SettingsViewModel(PresetLibrary library)
         new("Precision", "32-bit float"),
         new("Determinism", "Same input + preset ⇒ same output"),
         new("Network access", "None — all processing is local"),
+        new("Preview display profile", DisplayProfile.Path is { } profile
+            ? Path.GetFileName(profile)
+            : "None — preview shown unmanaged"),
     ];
 
     public IReadOnlyList<InfoRow> Shortcuts { get; } =

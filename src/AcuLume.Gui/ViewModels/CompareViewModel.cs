@@ -128,7 +128,7 @@ public sealed partial class CompareViewModel(SharpenViewModel sharpen, PresetLib
                 var (label, description, preset) = Descriptions.TryGetValue(variant.Name, out var d)
                     ? d
                     : (variant.Name.ToUpperInvariant(), string.Empty, null);
-                Tiles.Add(new CompareTile(label, description, new Bitmap(variant.Path), preset));
+                Tiles.Add(new CompareTile(label, description, PreviewRenderer.LoadForDisplay(variant.Path), preset));
             }
 
             Selected = Tiles.FirstOrDefault(t => t.PresetName is not null);

@@ -208,24 +208,39 @@ public sealed class PreviewRenderer : IDisposable
         return buckets;
     }
 
-    private static Bitmap ToBitmap(Image image)
+    internal static Bitmap ToBitmap(Image image)
     {
         var srgb = image.Interpretation == Enums.Interpretation.Srgb
             ? image
             : image.Colourspace(Enums.Interpretation.Srgb);
+        var display = DisplayProfile.ToDisplay(srgb);
         try
         {
-            var png = srgb.PngsaveBuffer(compression: 1);
+            // Strip the profile: the pixels are already in the display's space, and a profile left
+            // in the PNG invites whatever renders it to convert a second time.
+            var png = display.PngsaveBuffer(compression: 1, keep: Enums.ForeignKeep.None);
             using var stream = new MemoryStream(png, writable: false);
             return new Bitmap(stream);
         }
         finally
         {
+            if (!ReferenceEquals(display, srgb))
+            {
+                display.Dispose();
+            }
+
             if (!ReferenceEquals(srgb, image))
             {
                 srgb.Dispose();
             }
         }
+    }
+
+    /// <summary>Loads a file for display, colour-managed the same way the live preview is.</summary>
+    public static Bitmap LoadForDisplay(string path)
+    {
+        using var image = Image.NewFromFile(path, access: Enums.Access.Sequential);
+        return ToBitmap(image);
     }
 
     public void Dispose()

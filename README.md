@@ -41,7 +41,8 @@ Full algorithm write-up: [`docs/ALGORITHM.md`](docs/ALGORITHM.md). Canonical spe
 
 Six screens over the same `AcuLume.Core` engine the CLI uses, so what the preview shows is what the
 export writes — previews render at the **output** resolution, because that is the resolution the
-sharpening is tuned for.
+sharpening is tuned for, and they are colour-managed into the monitor's own ICC profile so a
+wide-gamut display does not show everything oversaturated.
 
 | Screen | What it does |
 |---|---|
@@ -50,7 +51,7 @@ sharpening is tuned for.
 | **Presets** | Built-in presets plus your own library under `%APPDATA%/AcuLume/presets`, import / export / duplicate / rename / delete |
 | **Compare** | The five-variant set — original, resize-only, USM baseline, AcuLume natural, AcuLume crisp — side by side |
 | **Image Info** | File, capture (EXIF) and the exact output maths for the current settings |
-| **Settings** | Engine, libvips version, paths, keyboard shortcuts |
+| **Settings** | Engine, libvips version, the display profile in use, paths, keyboard shortcuts |
 
 ```bash
 dotnet run --project src/AcuLume.Gui              # open empty
