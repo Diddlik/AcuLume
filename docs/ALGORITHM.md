@@ -158,9 +158,28 @@ when only the medium band was actually running.
 a downscale: doubling its amounts reaches 1.11x acutance and remains visibly clean at 100%, which
 keeps it "gentle" for print and archival exports.
 
-On fine regular texture (a piqué knit) `web-1800-natural` resolves more than the reference mask does
-at a lower overshoot -- the fine band doing its job. `web-1800-crisp` renders the same weave as a hard
-grid, which is one reason it stays flagged experimental.
+### Known limitation: near-Nyquist texture
+
+Ranking the corpus by how much of its energy sits in the band the fine radius operates on, and
+measuring each preset's amplification of exactly that band, gives a clear picture: `web-1800-natural`
+boosts it by a median 1.28x and `web-1800-crisp` by 1.44x, rising to 1.48x and a worst case of 1.86x
+on the most texture-heavy photographs.
+
+Where that structure is real detail — hair, knitwear, brickwork — this is the fine band doing its job,
+and `natural` is a clear improvement over the downscale. Where it is *aliasing*, it is not. A finely
+striped shirt at an 1800 px long edge already moirés in the resize-only variant, because the stripe
+period lands near the output Nyquist limit; sharpening then amplifies the interference pattern along
+with everything else, and `natural` makes visible moiré distinctly worse. `crisp` compounds it.
+
+No stage in the pipeline can distinguish aliasing from detail after the resize — by then they are the
+same signal. The fix belongs in Phase 3 (staged downscaling, which suppresses aliasing before the
+sharpener ever sees it), not in the sharpening parameters. Until then this is a documented limitation:
+on subjects with regular texture near the output resolution, sharpening amplifies moiré.
+
+`web-1800-crisp` keeps its `experimental` flag for this reason. It wins the overshoot-per-sharpening
+comparison against the reference mask (78 of 80 photographs), so it is not badly behaved in general —
+but it is the preset most likely to turn near-Nyquist texture into an artefact, and it renders hair
+with a wiry, etched edge that `natural` does not.
 
 ## Not yet implemented
 
