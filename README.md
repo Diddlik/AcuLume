@@ -79,7 +79,7 @@ dotnet run --project src/AcuLume.Cli -- sharpen photo.jpg \
 
 # Any preset value can be overridden; the flag always wins
 dotnet run --project src/AcuLume.Cli -- sharpen photo.jpg \
-  --preset web-1800-natural --fine-amount 1.2 --halo-protection 0.8
+  --preset web-1800-natural --fine-amount 6.5 --halo-protection 0.8
 ```
 
 Source files are never overwritten: `--output` must differ from the input, and when it is omitted
@@ -162,8 +162,10 @@ is what keeps the GUI preview and a CLI export in agreement.
 Phase 1 of the specification is complete — the full adaptive multi-frequency pipeline, presets,
 `compare`, and the desktop app. Next up:
 
-- **Phase 2 — calibration.** Tune the bands, ratios, and limits against a real photo corpus, and
-  drop the `experimental` flag from `web-1800-crisp`.
+- **Phase 2 — calibration.** First pass done: the web presets now match a naive unsharp mask's
+  acutance while overshooting less (numbers in [`docs/ALGORITHM.md`](docs/ALGORITHM.md)). Still open —
+  a wider photo corpus, `full-natural` at print resolution, and dropping the `experimental` flag from
+  `web-1800-crisp`.
 - **Phase 3 — resize research.** Single vs. staged downscaling, gamma vs. linear-light.
 - **Phase 4 — advanced restoration.** Wiener / Richardson-Lucy as optional capture sharpening.
 - **Phase 5 — distribution.** Self-contained Windows x64 build first, Linux x64 second.

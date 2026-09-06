@@ -9,7 +9,8 @@ Sharpening operates on the **L channel of a CIE Lab conversion** of the working 
 1. Convert sRGB → Lab (`Image.Colourspace(Enums.Interpretation.Lab)`) once per call.
 2. Extract L (band 0); a/b (bands 1-2) are left untouched for the whole pipeline.
 3. For each enabled band (fine, medium — spec section 15):
-   - High-pass: `highPass = L - GaussianBlur(L, radius)` (radius = Gaussian sigma in px).
+   - High-pass: `highPass = L - GaussianBlur(L, radius)` (radius = Gaussian sigma in px), with
+     `min-ampl` 0.005 and float precision — see "Sub-pixel radii" below.
    - Asymmetric split: `weighted = highPass < 0 ? highPass * darkAmount : highPass * lightAmount`.
    - Scale: `contribution = weighted * amount`.
 4. Sum every band's `contribution` into one total, then `L' = L + total` (added once, not per band).
@@ -24,6 +25,16 @@ never changes, only lightness.
 
 Implementation: `AcuLume.Core.Sharpening.OutputSharpenStage`, `BandSharpenOptions`,
 `FrequencyBandExtractor`, `AsymmetricDetailMixer`.
+
+### Sub-pixel radii
+
+libvips truncates the Gaussian where it drops below `min-ampl` and, at integer precision, rounds the
+remaining off-centre weights. With the defaults (`min-ampl` 0.2, integer precision) every sigma below
+~0.6 px collapses to a 1×1 mask, so the blur is an identity, the high-pass is exactly zero, and the
+band contributes nothing — silently, at any amount. The fine band exists precisely to work at
+sub-pixel radii, so `FrequencyBandExtractor` cuts the kernel at `min-ampl` 0.005 and convolves in
+float. Below `BandSharpenOptions.MinimumRadius` (0.35 px) the kernel is still not reliably distinct
+from an identity blur, so that is rejected rather than silently ignored.
 
 ## Edge protection (Task 6)
 
@@ -101,6 +112,25 @@ pipeline's benefit visible by contrast), and the two built-in presets. `--crop l
 caller-supplied geometric coordinates (e.g. picked once by eye around a strong edge in a specific
 test photo), not automatic content detection, since a robust detector for "shadow noise" or
 "highlight detail" regions would be over-engineering for Phase 1.
+
+## Calibration (Phase 2, first pass)
+
+Measured on real photographs at a 1800 px long edge, as mean absolute luminance gradient relative to
+the resize-only variant ("acutance"), with the 99.9th percentile of the difference from resize-only
+as a halo proxy:
+
+| variant | acutance | halo p99.9 |
+|---|---|---|
+| resize-only | 1.00x | 0 |
+| naive USM baseline | 1.15-1.21x | 0.043-0.082 |
+| `web-1800-natural` | 1.12-1.18x | 0.038-0.068 |
+| `web-1800-crisp` | 1.20-1.28x | 0.050-0.093 |
+
+`web-1800-natural` therefore lands at roughly the naive baseline's acutance while overshooting
+noticeably less — which is the entire claim the pipeline has to make. The amounts that produce this
+are ~5x the ones the presets shipped with before the sub-pixel radius fix, when only the medium band
+was actually running. `full-natural` has not been calibrated yet: at full resolution it reaches 1.04x
+with its current amounts, and the right target for a print preset still needs visual evaluation.
 
 ## Not yet implemented
 
