@@ -14,11 +14,21 @@ public sealed record HaloLimiterOptions
     /// <summary>Half-width (px) of the local min/max window used to estimate local contrast range.</summary>
     public double WindowRadius { get; init; } = 2.0;
 
-    /// <summary>Max allowed undershoot as a fraction of the local (max - min) range.</summary>
-    public double DarkLimit { get; init; } = 0.5;
+    /// <summary>
+    /// Max allowed undershoot as a fraction of the local (max - min) range.
+    ///
+    /// The original 0.5 was far too loose to ever bind: measured across seven photographs, turning
+    /// the limiter off changed the output by 0.14 out of 255, because the band contribution never
+    /// came near half the local contrast range. At 0.12 the stage does what it is for — mean
+    /// overshoot falls by a fifth at a matched sharpening level.
+    /// </summary>
+    public double DarkLimit { get; init; } = 0.12;
 
-    /// <summary>Max allowed overshoot as a fraction of the local (max - min) range. Tighter than dark by default.</summary>
-    public double LightLimit { get; init; } = 0.3;
+    /// <summary>
+    /// Max allowed overshoot as a fraction of the local range. Tighter than dark, because a bright
+    /// rim is the halo the eye catches.
+    /// </summary>
+    public double LightLimit { get; init; } = 0.07;
 
     public bool IsEnabled => Amount > 0;
 

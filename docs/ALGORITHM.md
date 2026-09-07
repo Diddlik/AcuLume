@@ -425,22 +425,54 @@ and crisp would have had no purpose. At 1.3x the gap is real again. It keeps its
 now for a sharper reason than before: its fine-band boost of 1.495x is the highest of the family and
 that band is what turns near-Nyquist texture into an artefact.
 
-## Open: the halo limiter barely engages
+## The halo limiter, and what it does for moire
 
-Building the help illustrations produced a measurement worth acting on. Rendering the preset with
-`haloProtection` at 0 and at its calibrated value and taking the strongest 150 px window across seven
-photographs, the difference is **0.14 out of 255** — the stage is effectively inert in normal use.
+Its default limits were wrong. Capping overshoot at half the local contrast range meant the band
+contribution never reached the cap: with the amounts as they shipped then, turning the limiter off
+changed the output by 0.14 out of 255. The stage existed, had tests and a slider, and did nothing.
 
-The reason is its limits, not its strength: `DarkLimit` 0.5 and `LightLimit` 0.3 cap overshoot at half
-and a third of the local contrast range, and the band contribution never reaches that. Tightening them
-to 0.1 and 0.05 makes it visible (4.68/255 on the same crop).
+Two things changed that. The amounts are now several times larger, so contributions are bigger; and
+the defaults are tightened to 0.12 dark and 0.07 light, at which point the stage binds. Sweeping the
+limits across the corpus shows overshoot per unit of sharpening improving monotonically as they
+tighten — 8.4 at the old 0.5/0.3, 7.7 at 0.2/0.12, 6.8 at 0.12/0.07 — so this is efficiency, not
+merely a trade.
 
-So either the default limits are far too loose to ever bite, or the stage is in the wrong place in the
-pipeline to see the overshoot it is meant to cap. Both are testable with the method used for the noise
-protection analysis: sweep the limits, measure envelope overshoot and acutance across the corpus, and
-find out whether a tighter limiter buys anything the edge protection does not already provide.
+It also does something for the near-Nyquist problem. Moire is a large excursion in periodic
+structure, which is what a limiter caps, and the fine-band proxy on the striped shirt falls from
+1.560x to 1.455x.
 
-## Not yet implemented
+### Moire cannot be avoided by choosing a different band
+
+The obvious idea — move the fine band away from the output Nyquist limit, where the moire lives —
+was measured and is wrong. At a matched acutance of about 1.30 the proxy is 1.560x at a 0.35 px fine
+radius, 1.611x at 0.45, 1.623x at 0.55 and 1.571x at 0.70: flat, and if anything slightly worse for
+the wider bands.
+
+That confirms what Phase 3 found by a different route. The moire is not aliasing produced at the
+output resolution; it is already in the full-resolution source, and by the time any stage of this
+pipeline sees it, it is ordinary low-frequency image structure. There is no band to avoid, so it
+scales with total sharpening. The halo limiter trims the excursions; nothing removes them.
+
+### Where the presets landed
+
+| preset | acutance | noise floor | overshoot | per unit of gain | moire proxy |
+|---|---|---|---|---|---|
+| `web-1800-natural` | 1.267 | 0.840 | 1.604 | 5.7 | 1.455x |
+| `web-1800-crisp` | 1.396 | 0.847 | 2.916 | 6.9 | 1.696x |
+| Photoshop | 1.240 | 0.861 | 1.406 | 5.9 | |
+| `full-natural` (full resolution) | 1.185 | 0.816 | | | |
+
+`web-1800-natural` stays ahead of the Photoshop export on sharpening and noise, and is now also
+ahead on overshoot per unit of sharpening.
+
+`web-1800-crisp` needed a second correction. With the tightened limiter capping both presets equally
+its acutance collapsed onto natural's — 1.284 against 1.267, indistinguishable again. More amount
+could not separate them, because the limiter was the binding constraint, so crisp instead applies the
+limiter less strongly (`haloProtection` 0.5 against 0.7). That is exactly its stated character:
+stronger, with the halo risk to match. Its overshoot per unit of gain is 6.9 against natural's 5.7
+and its moire proxy 1.696x against 1.455x, which is why it keeps its `experimental` flag.
+
+## Not yet implemented## Not yet implemented
 
 - Optional coarse band (spec 15.3 — architecture already supports adding one).
 - Output-size-aware radius scaling, batch command (the GUI has one), debug image export.

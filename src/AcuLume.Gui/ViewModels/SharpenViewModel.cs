@@ -288,7 +288,7 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
     /// amount of 6.0 down to its old maximum of 2.0 and wrote that back, so the GUI quietly produced
     /// weaker output than the CLI for the same preset. `PresetsFitTheSliderRanges` guards it.
     /// </summary>
-    public static double MaxBandAmount => 12.0;
+    public static double MaxBandAmount => 20.0;
 
     public static double MaxBandRadius => 4.0;
 
