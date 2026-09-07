@@ -304,6 +304,47 @@ revisiting with RAW input and a measured or estimated PSF, which is out of scope
 Both engines stay in the tree, off by default, as the spec's separate experimental restoration
 engines — not folded into the stable path.
 
+## Measured against Photoshop
+
+Twelve photographs were exported from Photoshop at an 1800 px long edge and compared with
+`web-1800-natural`. Both were measured against the same neutral reference — the ideal
+spectrum-truncated downscale of the original, computed in linear light — so neither tool is
+compared against the other's idea of correct.
+
+| | AcuLume | Photoshop |
+|---|---|---|
+| acutance | 1.076 | 1.094 |
+| overshoot per unit of gain | 0.0164 | 0.0163 |
+| noise floor | 1.070 | 0.884 |
+| clipping increase | +0.006% | 0.000% |
+
+Photoshop sharpens slightly more (8 of 12 photographs) and, more consistently, delivers a noise floor
+*below* the ideal downscale while ours sits above it (11 of 12). Halo behaviour is indistinguishable:
+0.0164 against 0.0163 per unit of sharpening. The overshoot control this pipeline is built around is
+therefore not an advantage over Photoshop — it is parity.
+
+Splitting our own pipeline by stage explains most of the noise gap, and it is not the sharpener:
+
+| stage | noise floor | acutance |
+|---|---|---|
+| our resize only | 1.041 | 0.887 |
+| our resize + sharpen | 1.070 | 1.076 |
+| Photoshop | 0.884 | 1.094 |
+
+The Lanczos downscale alone already sits 4% above the ideal reference, and the sharpening adds only
+2.7% on top of that. Photoshop lands 12% *below* the reference, which no resize kernel does by
+itself — they are denoising as part of the export. So the gap is mostly a stage AcuLume does not have
+at all, rather than a sharpener that behaves worse.
+
+The other half of that table is worth as much: our resize-only output is 11% *softer* than the ideal
+downscale, and the sharpening spends most of its budget recovering that loss before adding anything.
+On two of the twelve photographs it does not fully recover it — the final result is still marginally
+softer than a perfect downscale would have been unsharpened.
+
+A caveat on scope: the accompanying full-resolution Photoshop set could not be used. Those files
+differ from the originals by 0.6-0.8 levels out of 255 with an acutance ratio of 0.99-1.02, which is
+a JPEG re-encode rather than a sharpening pass, so nothing can be concluded from them.
+
 ## Open: the halo limiter barely engages
 
 Building the help illustrations produced a measurement worth acting on. Rendering the preset with
