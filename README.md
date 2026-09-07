@@ -188,6 +188,10 @@ is what keeps the GUI preview and a CLI export in agreement.
 Phase 1 of the specification is complete — the full adaptive multi-frequency pipeline, presets,
 `compare`, and the desktop app. Next up:
 
+- **Noise reduction.** A guided-filter stage between resize and sharpening, with every threshold
+  expressed as a multiple of the noise sigma measured from the image. Removing grain before the
+  sharpener means raising the amounts costs almost none back, which puts the shipped presets ahead of
+  a Photoshop export on both sharpening and noise (numbers in [`docs/ALGORITHM.md`](docs/ALGORITHM.md)).
 - **Phase 2 — calibration.** Presets calibrated against 200 photographs from two camera bodies:
   `web-1800-natural` overshoots ~31% less per unit of sharpening than a reference unsharp mask, in 79
   of 80 photographs, and pushes ~20x fewer pixels into clipping (method and numbers in

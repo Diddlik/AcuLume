@@ -5,16 +5,22 @@
   "resize": {
     "enabled": false
   },
+  "denoise": {
+    "engine": "guidedFilter",
+    "amount": 1.00,
+    "threshold": 2.00,
+    "radius": 2.0
+  },
   "outputSharpen": {
     "fine": {
       "radius": 0.60,
-      "amount": 1.45,
+      "amount": 1.90,
       "darkAmount": 0.80,
       "lightAmount": 0.60
     },
     "medium": {
       "radius": 1.40,
-      "amount": 0.45,
+      "amount": 0.59,
       "darkAmount": 0.75,
       "lightAmount": 0.55
     },

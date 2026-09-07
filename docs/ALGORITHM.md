@@ -399,7 +399,31 @@ better on faces, stonework and brickwork side by side.
 
 It also makes the known near-Nyquist limitation worse: fine-band boost rises from 1.386x to 1.560x
 on the striped shirt, and the moire is visibly harder. That trade — better everywhere except on
-subjects that already moire — is why the presets have not been changed.
+subjects that already moire — was taken deliberately.
+
+### The shipped presets
+
+All three now run the guided filter at full strength with a 2.0 sigma threshold. The multiplier on
+each preset's band amounts was measured separately rather than copied across, because the presets
+occupy different regimes: `crisp` was already the strongest and carries the moire risk, and
+`full-natural` works without a downscale, where the measured sigma is lower.
+
+| preset | fine | medium | acutance | noise floor | fine boost |
+|---|---|---|---|---|---|
+| `web-1800-natural` | 9.60 | 2.88 | 1.292 | 0.840 | 1.364x |
+| `web-1800-crisp` | 11.40 | 3.40 | 1.394 | 0.844 | 1.495x |
+| Photoshop | | | 1.240 | 0.861 | 1.344x |
+| `full-natural` (full resolution) | 1.90 | 0.59 | 1.160 | 0.812 | 1.199x |
+
+Measured against the resize-only variant over the same twelve photographs, so the rows compare
+directly. `web-1800-natural` is now ahead of Photoshop on both sharpening and noise, at a fine-band
+boost only slightly higher.
+
+`web-1800-crisp` needed the larger multiplier for a reason worth recording: at 1.0x it produced
+1.307 acutance against the new natural's 1.300 — the two presets would have been indistinguishable
+and crisp would have had no purpose. At 1.3x the gap is real again. It keeps its `experimental` flag,
+now for a sharper reason than before: its fine-band boost of 1.495x is the highest of the family and
+that band is what turns near-Nyquist texture into an artefact.
 
 ## Open: the halo limiter barely engages
 
