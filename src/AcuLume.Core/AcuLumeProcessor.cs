@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using AcuLume.Core.Imaging;
 using AcuLume.Core.Sharpening;
+using NetVips;
 
 namespace AcuLume.Core;
 
@@ -25,7 +26,7 @@ public sealed class AcuLumeProcessor
 
         var stopwatch = Stopwatch.StartNew();
 
-        using var image = Load(inputPath);
+        using var image = Load(inputPath, options);
         cancellationToken.ThrowIfCancellationRequested();
 
         var inputWidth = image.Width;
@@ -41,6 +42,12 @@ public sealed class AcuLumeProcessor
         if (options.LongEdge is { } longEdge)
         {
             processed = Resize(inputPath, processed, longEdge, options);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (options.Denoise.IsEnabled)
+        {
+            processed = Denoise(inputPath, processed, options.Denoise);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -66,11 +73,16 @@ public sealed class AcuLumeProcessor
         };
     }
 
-    private static NetVips.Image Load(string inputPath)
+    private static NetVips.Image Load(string inputPath, ProcessingOptions options)
     {
+        // Denoising measures the noise and then filters by it, which is two passes over the same
+        // pixels. A sequentially-read source rejects the second one, so that stage — and only that
+        // stage — needs the image to stay re-readable.
+        var access = options.Denoise.IsEnabled ? Enums.Access.Random : Enums.Access.Sequential;
+
         try
         {
-            return ImageLoader.LoadForProcessing(inputPath);
+            return ImageLoader.LoadForProcessing(inputPath, access);
         }
         catch (FileNotFoundException ex)
         {
@@ -105,6 +117,19 @@ public sealed class AcuLumeProcessor
         {
             throw new AcuLumeProcessingException(
                 inputPath, ProcessingStage.Sharpen, $"Capture sharpen failed: {ex.Message}", ex);
+        }
+    }
+
+    private static NetVips.Image Denoise(string inputPath, NetVips.Image image, DenoiseOptions options)
+    {
+        try
+        {
+            return DenoiseStage.Apply(image, options);
+        }
+        catch (Exception ex)
+        {
+            throw new AcuLumeProcessingException(
+                inputPath, ProcessingStage.Sharpen, $"Denoise failed: {ex.Message}", ex);
         }
     }
 

@@ -23,6 +23,13 @@ public sealed record ProcessingOptions
     /// <summary>Capture sharpening, applied at capture resolution before the resize. Off by default.</summary>
     public CaptureSharpenOptions CaptureSharpen { get; init; } = new();
 
+    /// <summary>
+    /// Noise reduction, applied after the resize and before sharpening — the noise that matters is
+    /// the noise the sharpener would amplify. Off by default; this is a scope extension beyond the
+    /// specification, which asks only that sharpening not amplify noise.
+    /// </summary>
+    public DenoiseOptions Denoise { get; init; } = new();
+
     /// <summary>Output sharpening (fine + medium bands), applied after resize. Disabled by default.</summary>
     public OutputSharpenOptions OutputSharpen { get; init; } = new();
 }

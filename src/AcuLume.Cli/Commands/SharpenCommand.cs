@@ -22,6 +22,10 @@ public static class SharpenCommand
         var outputOption = new Option<FileInfo?>("--output", "-o");
         var qualityOption = new Option<int?>("--quality");
         var allowUpscaleOption = new Option<bool>("--allow-upscale");
+        var denoiseOption = new Option<double?>("--denoise");
+        var denoiseEngineOption = new Option<DenoiseEngine?>("--denoise-engine");
+        var denoiseThresholdOption = new Option<double?>("--denoise-threshold");
+        var denoiseRadiusOption = new Option<double?>("--denoise-radius");
         var captureSharpenOption = new Option<CaptureSharpenLevel?>("--capture-sharpen");
         var captureEngineOption = new Option<CaptureSharpenEngine?>("--capture-engine");
         var captureRadiusOption = new Option<double?>("--capture-radius");
@@ -53,6 +57,10 @@ public static class SharpenCommand
         command.Add(outputOption);
         command.Add(qualityOption);
         command.Add(allowUpscaleOption);
+        command.Add(denoiseOption);
+        command.Add(denoiseEngineOption);
+        command.Add(denoiseThresholdOption);
+        command.Add(denoiseRadiusOption);
         command.Add(captureSharpenOption);
         command.Add(captureEngineOption);
         command.Add(captureRadiusOption);
@@ -109,6 +117,14 @@ public static class SharpenCommand
             var longEdge = parseResult.GetValue(longEdgeOption) ?? baseOptions.LongEdge;
             var quality = parseResult.GetValue(qualityOption) ?? baseOptions.Quality;
             var allowUpscale = parseResult.GetValue(allowUpscaleOption) || baseOptions.AllowUpscale;
+            var baseDenoise = baseOptions.Denoise;
+            var denoise = baseDenoise with
+            {
+                Amount = parseResult.GetValue(denoiseOption) ?? baseDenoise.Amount,
+                Engine = parseResult.GetValue(denoiseEngineOption) ?? baseDenoise.Engine,
+                Threshold = parseResult.GetValue(denoiseThresholdOption) ?? baseDenoise.Threshold,
+                Radius = parseResult.GetValue(denoiseRadiusOption) ?? baseDenoise.Radius,
+            };
             var baseCapture = baseOptions.CaptureSharpen;
             var capture = baseCapture with
             {
@@ -133,6 +149,7 @@ public static class SharpenCommand
                 LongEdge = longEdge,
                 AllowUpscale = allowUpscale,
                 CaptureSharpen = capture,
+                Denoise = denoise,
                 ResizeStrategy = resizeStrategy,
                 ResizeSpace = resizeSpace,
                 Quality = quality,

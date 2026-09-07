@@ -112,6 +112,8 @@ the tool writes `<name>.aculume<ext>` next to the input.
 |---|---|
 | `--preset <name\|path>` | Built-in preset name or a path to a preset JSON file |
 | `--long-edge <px>`, `--allow-upscale` | Output size; upscaling is off by default |
+| `--denoise <0-1>` | Noise reduction between resize and sharpening; off by default |
+| `--denoise-engine <guidedfilter\|multiscaleshrinkage\|nonlocalmeans>`, `--denoise-threshold`, `--denoise-radius` | Which engine and how many measured noise sigmas count as noise |
 | `--capture-sharpen <off\|low\|normal>` | Light restoration before the resize (spec section 21); off by default |
 | `--capture-engine <finerestore\|richardsonlucy>`, `--capture-radius`, `--capture-iterations` | Which restoration engine and its parameters; Richardson-Lucy is experimental |
 | `--resize-strategy <single\|staged>`, `--resize-space <gamma\|linearlight>` | Experimental resize research (spec Phase 3); defaults are `single` and `gamma` |

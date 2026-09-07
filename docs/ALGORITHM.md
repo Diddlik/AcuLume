@@ -345,6 +345,62 @@ A caveat on scope: the accompanying full-resolution Photoshop set could not be u
 differ from the originals by 0.6-0.8 levels out of 255 with an acutance ratio of 0.99-1.02, which is
 a JPEG re-encode rather than a sharpening pass, so nothing can be concluded from them.
 
+## Noise reduction (scope extension)
+
+The Photoshop comparison showed the gap was a stage AcuLume did not have, so `DenoiseStage` adds
+one, between the resize and the sharpening: the noise that matters is the noise the sharpener is
+about to amplify. Off by default — the specification asks only that sharpening not amplify noise.
+
+Thresholds are multiples of the sigma `NoiseEstimator` measures from the image, never absolute
+constants. Three engines, all composed from libvips operations so the thread pool is used and no
+managed per-pixel loop exists:
+
+- **`GuidedFilter`** — a local linear model built from box means; cost independent of radius.
+- **`MultiScaleShrinkage`** — soft thresholding across three detail octaves.
+- **`NonLocalMeans`** — accumulated over a fixed set of shifts rather than a per-pixel patch search,
+  which is what makes it expressible here at all.
+
+### Results (12 photographs, neutral FFT reference)
+
+| config | acutance | noise floor | overshoot per gain | 1800 px | 18 MP |
+|---|---|---|---|---|---|
+| no denoise | 1.076 | 1.070 | 40.3 | 0.54 s | 1.9 s |
+| `GuidedFilter` | 1.053 | 0.919 | 55.9 | 0.85 s | 1.3 s |
+| `MultiScaleShrinkage` | 0.940 | 0.786 | — | 0.89 s | 2.3 s |
+| `NonLocalMeans` | 1.050 | 0.896 | 59.9 | 4.6 s | 39.7 s |
+| Photoshop | 1.094 | 0.884 | 30.7 | | |
+
+**Non-local means did not earn its cost.** It ties the guided filter — marginally less noise,
+marginally less acutance — at five times the price at 1800 px and thirty times at full resolution.
+The reason was predictable and was predicted: patch weighting assumes white noise, and after a 3x
+downscale the residual noise is spatially correlated, so the mechanism its advantage comes from is
+the one the input breaks. The same shape of failure as Richardson-Lucy in Phase 4. BM3D was not
+attempted: its block matching is data-dependent grouping that no composition of libvips operations
+expresses, so it would need a second native dependency.
+
+Multi-scale shrinkage is too aggressive at these settings — it drops below an ideal downscale.
+
+### Denoising pays for stronger sharpening
+
+Removing grain before the sharpener means there is far less of it to amplify, so raising the band
+amounts costs almost nothing on the noise axis:
+
+| config | acutance | noise floor | overshoot per gain |
+|---|---|---|---|
+| guided filter, amounts x1.0 | 1.053 | 0.919 | 55.9 |
+| x1.3 | 1.107 | 0.922 | 30.5 |
+| x1.6 | 1.161 | 0.926 | 22.7 |
+| x2.0 | 1.230 | 0.931 | 18.3 |
+| threshold 2.0, x1.6 | **1.143** | **0.876** | **24.8** |
+| Photoshop | 1.094 | 0.884 | 30.7 |
+
+Guided filter at threshold 2.0 with amounts at 1.6x beats Photoshop on all three measures, and looks
+better on faces, stonework and brickwork side by side.
+
+It also makes the known near-Nyquist limitation worse: fine-band boost rises from 1.386x to 1.560x
+on the striped shirt, and the moire is visibly harder. That trade — better everywhere except on
+subjects that already moire — is why the presets have not been changed.
+
 ## Open: the halo limiter barely engages
 
 Building the help illustrations produced a measurement worth acting on. Rendering the preset with
