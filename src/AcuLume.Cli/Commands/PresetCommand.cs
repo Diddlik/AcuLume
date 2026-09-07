@@ -57,6 +57,10 @@ public static class PresetCommand
                 Console.WriteLine($"Edge protection  {options.OutputSharpen.EdgeProtection.Amount}");
                 Console.WriteLine($"Noise protection {options.OutputSharpen.NoiseProtection.Amount}");
                 Console.WriteLine($"Halo protection  {options.OutputSharpen.HaloLimiter.Amount}");
+                Console.WriteLine(options.Denoise.IsEnabled
+                    ? $"Denoise          {options.Denoise.Engine} amount={options.Denoise.Amount} " +
+                      $"threshold={options.Denoise.Threshold}σ radius={options.Denoise.Radius}"
+                    : "Denoise          off");
 
                 return (int)ExitCode.Success;
             }

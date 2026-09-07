@@ -266,6 +266,20 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
     public partial bool AllowUpscale { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsDenoiseEnabled))]
+    public partial double DenoiseAmount { get; set; }
+
+    [ObservableProperty]
+    public partial DenoiseEngine DenoiseEngine { get; set; } = DenoiseEngine.GuidedFilter;
+
+    [ObservableProperty]
+    public partial double DenoiseThreshold { get; set; } = 2.0;
+
+    public bool IsDenoiseEnabled => DenoiseAmount > 0;
+
+    public static double MaxDenoiseThreshold => 4.0;
+
+    [ObservableProperty]
     public partial string? SelectedPreset { get; set; }
 
     /// <summary>
@@ -458,6 +472,12 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
         LongEdge = LongEdge,
         AllowUpscale = AllowUpscale,
         Quality = Quality,
+        Denoise = new DenoiseOptions
+        {
+            Amount = DenoiseAmount,
+            Engine = DenoiseEngine,
+            Threshold = DenoiseThreshold,
+        },
         CaptureSharpen = new CaptureSharpenOptions
         {
             Level = CaptureLevel,
@@ -511,6 +531,14 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
         Resize = OutputTarget == OutputTarget.Full
             ? new ResizePresetOptions { Enabled = false }
             : new ResizePresetOptions { Enabled = true, LongEdge = LongEdge, AllowUpscale = AllowUpscale },
+        Denoise = DenoiseAmount <= 0
+            ? null
+            : new DenoisePresetOptions
+            {
+                Engine = DenoiseEngine.ToString(),
+                Amount = DenoiseAmount,
+                Threshold = DenoiseThreshold,
+            },
         CaptureSharpen = CaptureLevel == CaptureSharpenLevel.Off
             ? null
             : new CaptureSharpenPresetOptions
@@ -575,6 +603,11 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
             HaloProtectionAmount = sharpen.HaloLimiter.Amount;
             HaloProtectionEnabled = sharpen.HaloLimiter.IsEnabled;
 
+            var denoise = options.Denoise;
+            DenoiseAmount = denoise.Amount;
+            DenoiseEngine = denoise.Engine;
+            DenoiseThreshold = denoise.Threshold;
+
             var capture = options.CaptureSharpen;
             CaptureLevel = capture.Level;
             CaptureEngine = capture.Engine;
@@ -625,7 +658,8 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
         nameof(HaloProtectionEnabled) or nameof(HaloProtectionAmount) or
         nameof(AllowUpscale) or
         nameof(CaptureLevel) or nameof(CaptureEngine) or
-        nameof(CaptureRadius) or nameof(CaptureIterations);
+        nameof(CaptureRadius) or nameof(CaptureIterations) or
+        nameof(DenoiseAmount) or nameof(DenoiseEngine) or nameof(DenoiseThreshold);
 
     private void SchedulePreview()
     {

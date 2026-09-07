@@ -1,4 +1,5 @@
 using AcuLume.Core.Configuration;
+using AcuLume.Core.Sharpening;
 
 namespace AcuLume.Core.Tests;
 
@@ -59,10 +60,13 @@ public class PresetLoaderTests
         Assert.False(options.AllowUpscale);
         Assert.Equal(90, options.Quality);
         Assert.Equal(0.35, options.OutputSharpen.Fine.Radius);
-        Assert.Equal(6.00, options.OutputSharpen.Fine.Amount);
+        Assert.Equal(9.60, options.OutputSharpen.Fine.Amount);
         Assert.Equal(0.65, options.OutputSharpen.EdgeProtection.Amount);
         Assert.Equal(1.00, options.OutputSharpen.NoiseProtection.Amount);
         Assert.Equal(0.70, options.OutputSharpen.HaloLimiter.Amount);
+        Assert.True(options.Denoise.IsEnabled);
+        Assert.Equal(DenoiseEngine.GuidedFilter, options.Denoise.Engine);
+        Assert.Equal(2.00, options.Denoise.Threshold);
     }
 
     [Fact]

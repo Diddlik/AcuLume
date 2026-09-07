@@ -339,6 +339,46 @@
 
             <Border Classes="divider" Margin="0,16,0,16" />
 
+            <!-- noise reduction: between resize and sharpening -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+              <TextBlock Grid.Column="0" Text="Noise Reduction" FontWeight="SemiBold" />
+              <TextBlock Grid.Column="1" Classes="hint" Text="before sharpening" VerticalAlignment="Center" />
+            </Grid>
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,0,0,6">
+              <TextBlock Grid.Column="0" Text="Strength" Foreground="{DynamicResource TextSecondary}" />
+              <TextBlock Grid.Column="1" Classes="mono"
+                         Text="{Binding DenoiseAmount, StringFormat='{}{0:0.00}'}" />
+            </Grid>
+            <Slider Minimum="0" Maximum="1" Value="{Binding DenoiseAmount}" />
+
+            <StackPanel IsVisible="{Binding IsDenoiseEnabled}">
+              <Border Classes="segments" Margin="0,10,0,0">
+                <UniformGrid Columns="3">
+                  <RadioButton Classes="segment" Content="Guided" GroupName="Denoise"
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               IsChecked="{Binding DenoiseEngine, Converter={StaticResource EnumMatch}, ConverterParameter=GuidedFilter}" />
+                  <RadioButton Classes="segment" Content="Multi-scale" GroupName="Denoise"
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               IsChecked="{Binding DenoiseEngine, Converter={StaticResource EnumMatch}, ConverterParameter=MultiScaleShrinkage}" />
+                  <RadioButton Classes="segment" Content="Non-local" GroupName="Denoise"
+                               HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                               IsChecked="{Binding DenoiseEngine, Converter={StaticResource EnumMatch}, ConverterParameter=NonLocalMeans}" />
+                </UniformGrid>
+              </Border>
+
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="0,10,0,6">
+                <TextBlock Grid.Column="0" Text="Threshold" Foreground="{DynamicResource TextSecondary}" />
+                <TextBlock Grid.Column="1" Classes="mono"
+                           Text="{Binding DenoiseThreshold, StringFormat='{}{0:0.0} σ'}" />
+              </Grid>
+              <Slider Minimum="0.5" Maximum="{x:Static vm:SharpenViewModel.MaxDenoiseThreshold}"
+                      Value="{Binding DenoiseThreshold}" />
+              <TextBlock Classes="hint" Margin="0,5,0,0" TextWrapping="Wrap"
+                         Text="Detail below this many measured noise sigmas is removed before sharpening, so raising the amounts costs almost no extra grain." />
+            </StackPanel>
+
+            <Border Classes="divider" Margin="0,16,0,16" />
+
             <!-- sharpening -->
             <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
               <TextBlock Grid.Column="0" Classes="title" Text="Sharpening" />

@@ -7,16 +7,22 @@
     "longEdge": 1800,
     "allowUpscale": false
   },
+  "denoise": {
+    "engine": "guidedFilter",
+    "amount": 1.00,
+    "threshold": 2.00,
+    "radius": 2.0
+  },
   "outputSharpen": {
     "fine": {
       "radius": 0.35,
-      "amount": 6.00,
+      "amount": 9.60,
       "darkAmount": 0.80,
       "lightAmount": 0.50
     },
     "medium": {
       "radius": 0.90,
-      "amount": 1.80,
+      "amount": 2.88,
       "darkAmount": 0.80,
       "lightAmount": 0.50
     },

@@ -65,6 +65,20 @@ public static class PresetLoader
             };
         }
 
+        if (preset.Denoise is { } denoise)
+        {
+            options = options with
+            {
+                Denoise = new DenoiseOptions
+                {
+                    Engine = Enum.Parse<DenoiseEngine>(denoise.Engine, ignoreCase: true),
+                    Amount = denoise.Amount,
+                    Threshold = denoise.Threshold,
+                    Radius = denoise.Radius,
+                },
+            };
+        }
+
         if (preset.OutputSharpen is { } sharpen)
         {
             options = options with

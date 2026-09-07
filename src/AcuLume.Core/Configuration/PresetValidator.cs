@@ -50,6 +50,27 @@ public static class PresetValidator
             }
         }
 
+        if (preset.Denoise is { } denoise)
+        {
+            if (!Enum.TryParse<DenoiseEngine>(denoise.Engine, ignoreCase: true, out _))
+            {
+                throw Invalid(preset,
+                    $"denoise.engine must be guidedFilter, multiScaleShrinkage or nonLocalMeans (was '{denoise.Engine}').");
+            }
+
+            ValidateFraction(preset, "denoise.amount", denoise.Amount);
+
+            if (denoise.Threshold <= 0)
+            {
+                throw Invalid(preset, "denoise.threshold must be positive.");
+            }
+
+            if (denoise.Radius is < 1 or > 8)
+            {
+                throw Invalid(preset, "denoise.radius must be between 1 and 8 px.");
+            }
+        }
+
         if (preset.OutputSharpen is { } outputSharpen)
         {
             ValidateBand(preset, "fine", outputSharpen.Fine);

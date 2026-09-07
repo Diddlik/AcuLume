@@ -24,6 +24,8 @@ public sealed record SharpenPreset
 
     public CaptureSharpenPresetOptions? CaptureSharpen { get; init; }
 
+    public DenoisePresetOptions? Denoise { get; init; }
+
     public OutputSharpenPresetOptions? OutputSharpen { get; init; }
 
     public OutputPresetOptions? Output { get; init; }
@@ -49,6 +51,20 @@ public sealed record CaptureSharpenPresetOptions
     public double Radius { get; init; } = 0.8;
 
     public int Iterations { get; init; } = 4;
+}
+
+public sealed record DenoisePresetOptions
+{
+    /// <summary>"guidedFilter", "multiScaleShrinkage" or "nonLocalMeans".</summary>
+    public string Engine { get; init; } = "guidedFilter";
+
+    /// <summary>Strength (0-1). 0 leaves the stage off.</summary>
+    public double Amount { get; init; }
+
+    /// <summary>How many measured noise sigmas of detail count as noise.</summary>
+    public double Threshold { get; init; } = 1.5;
+
+    public double Radius { get; init; } = 2.0;
 }
 
 public sealed record BandPresetOptions

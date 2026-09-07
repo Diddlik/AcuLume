@@ -40,6 +40,9 @@ public sealed class PreviewRenderer : IDisposable
     private Image? _resized;
     private Bitmap? _beforeBitmap;
 
+    private DenoiseOptions? _denoisedWith;
+    private Image? _denoised;
+
     public async Task<PreviewFrame> RenderAsync(string path, ProcessingOptions options, CancellationToken ct)
     {
         await _gate.WaitAsync(ct).ConfigureAwait(false);
@@ -66,7 +69,10 @@ public sealed class PreviewRenderer : IDisposable
         EnsureResized(options.LongEdge, options.AllowUpscale);
         ct.ThrowIfCancellationRequested();
 
-        var resized = _resized!;
+        EnsureDenoised(options.Denoise);
+        ct.ThrowIfCancellationRequested();
+
+        var resized = _denoised!;
         var sharpened = OutputSharpenStage.Apply(resized, options.OutputSharpen);
         try
         {
@@ -147,6 +153,41 @@ public sealed class PreviewRenderer : IDisposable
         _beforeBitmap = ToBitmap(_resized);
     }
 
+    /// <summary>
+    /// Denoising runs between the resize and the sharpening, so it is cached against the resize:
+    /// moving a sharpening slider must not re-run it, and changing it must not re-run the resize.
+    /// </summary>
+    private void EnsureDenoised(DenoiseOptions options)
+    {
+        if (_denoised is not null && _denoisedWith == options)
+        {
+            return;
+        }
+
+        InvalidateDenoise();
+
+        var resized = _resized!;
+        var denoised = DenoiseStage.Apply(resized, options);
+        _denoised = ReferenceEquals(denoised, resized) ? resized : denoised.CopyMemory();
+        if (!ReferenceEquals(denoised, resized) && !ReferenceEquals(denoised, _denoised))
+        {
+            denoised.Dispose();
+        }
+
+        _denoisedWith = options;
+    }
+
+    private void InvalidateDenoise()
+    {
+        if (_denoised is not null && !ReferenceEquals(_denoised, _resized))
+        {
+            _denoised.Dispose();
+        }
+
+        _denoised = null;
+        _denoisedWith = null;
+    }
+
     private void InvalidateCapture()
     {
         if (_captured is not null && !ReferenceEquals(_captured, _source))
@@ -161,6 +202,10 @@ public sealed class PreviewRenderer : IDisposable
 
     private void InvalidateResize()
     {
+        // Release the denoise cache first: with denoising off it *is* the resize, and checking both
+        // against each other afterwards would leave the shared instance owned by nobody.
+        InvalidateDenoise();
+
         if (_resized is not null && !ReferenceEquals(_resized, _source) && !ReferenceEquals(_resized, _captured))
         {
             _resized.Dispose();
