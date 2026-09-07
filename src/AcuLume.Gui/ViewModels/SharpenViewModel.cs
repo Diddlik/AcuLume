@@ -306,16 +306,21 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
 
     public HelpTopic FineHelp { get; } = new(
         "fine",
-        "The finest band: pore, thread and hair scale. It carries most of the crispness — and most of the risk of amplifying grain.");
+        "The finest band, at a sub-pixel radius: it acts almost entirely at the scale of single pixels, putting a sharp rim on every edge.",
+        isPlot: true);
+
+    public HelpTopic DenoiseHelp { get; } = new(
+        "denoise",
+        "Removes grain before the sharpener can amplify it, which is what lets the band amounts be as high as they are without the output looking noisy.");
 
     public HelpTopic MediumHelp { get; } = new(
         "medium",
-        "The coarser band: shapes and structure rather than texture. It adds solidity without the crunchy edge of a single strong radius.",
-        exaggerated: false);
+        "The coarser band: shapes and structure rather than texture. It deepens detail a couple of pixels wide, adding solidity without the crunchy edge of a single strong radius.");
 
     public HelpTopic BalanceHelp { get; } = new(
         "balance",
-        "Scales the darkening and lightening halves of the detail separately. Bright halos are the ones the eye catches, so light detail is held below dark.");
+        "Scales the darkening and lightening halves of the detail separately. Bright halos are the ones the eye catches, so light detail is held below dark — visible here as a deeper dip than spike.",
+        isPlot: true);
 
     public HelpTopic NoiseHelp { get; } = new(
         "noise",
@@ -323,12 +328,12 @@ public sealed partial class SharpenViewModel : ObservableObject, IDisposable
 
     public HelpTopic EdgeHelp { get; } = new(
         "edge",
-        "Attenuates sharpening along strong edges, where halos appear first.",
-        exaggerated: false);
+        "Attenuates sharpening along strong edges, where halos appear first — the texture beside the edge keeps its sharpening, the edge itself is held back.");
 
     public HelpTopic HaloHelp { get; } = new(
         "halo",
-        "Caps overshoot at a fraction of the local contrast range. At the preset's limits the band contribution rarely reaches them, so it seldom engages; this pair uses much tighter limits.");
+        "Caps overshoot at a fraction of the local contrast range, so a bright rim cannot run away from the edge that caused it.",
+        isPlot: true);
 
     partial void OnSelectedPresetChanged(string? value)
     {

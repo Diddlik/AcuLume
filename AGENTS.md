@@ -112,6 +112,40 @@ a window exists. `UpdateService` only acts when the user presses a button; there
 polling, and an update check is the only network request the application makes. Velopack manages an
 *installed* copy, so from a build tree `IsInstalled` is false and the UI says so.
 
+GUI help strips: each Sharpen section can expand a before/after pair rendered from the real engine
+by `build/generate-help-images.ps1`. The pairs use *synthetic targets*, not photographs: on a
+photograph these settings move a small crop by only a few levels out of 255, which had forced the
+earlier photographic pairs to be exaggerated past their preset values to show anything. A target
+built for the purpose — a sine bar pattern for the bands, a hard edge for the halo controls, flat
+grey with grain for the noise ones — shows the effect at the preset's real settings. Targets are
+1800 px wide so the resize is a no-op and the parameters act at the scale they were calibrated for.
+
+Settings whose signature is a one or two pixel rim (`fine`, `balance`, `halo`) are drawn as a plot
+of brightness across the edge rather than as a picture, because that rim is invisible in a tile and
+unmistakable as a curve. Topics that a later stage would mask are isolated in the generator: `noise`
+and `balance` switch the halo limiter off on both sides, since at its calibrated limits it clamps the
+excursion before the setting being illustrated can express itself, and `noise` also switches the
+denoise stage off, which otherwise removes the grain before the sharpener's own threshold sees it.
+
+The generator reports the largest difference the pipeline produced in the illustrated region and
+warns below 4/255 — the average is the wrong statistic here, since an overshoot rim is two columns
+wide and averaging it over a region reports zero for a setting that plainly works.
+
+GUI colour management: Windows does not colour-manage ordinary SDR windows, so on a wide-gamut
+display even correct sRGB renders oversaturated. `DisplayProfile` resolves the primary monitor's ICC
+profile (`GetICMProfileW`) and `PreviewRenderer.ToBitmap` converts into it, stripping the profile from
+the bitmap handed to Avalonia so nothing converts a second time; untagged images are taken as sRGB and
+every failure path falls back to the untransformed image. ~1 ms per 1200x1800 frame, so it is not
+cached. This is display-only — exported files keep their own pixels and their own profile and must
+never be converted into a monitor profile. Per-monitor handling and Linux (X11 `_ICC_PROFILE` /
+colord) are not implemented.
+
+Updates: `VelopackApp.Build().Run()` must stay the first statement in `Program.Main` — install,
+update and uninstall hooks are delivered as process arguments, and the app has to service them before
+a window exists. `UpdateService` only acts when the user presses a button; there is no background
+polling, and an update check is the only network request the application makes. Velopack manages an
+*installed* copy, so from a build tree `IsInstalled` is false and the UI says so.
+
 GUI help strips: each Sharpen section can expand a before/after pair rendered from the real engine by
 `build/generate-help-images.ps1` (source photographs are not in the repository; the generated PNGs
 are). Choosing regions by maximum measured difference reliably lands on gravel, grass and foliage —

@@ -16,6 +16,7 @@ public class HelpTopicTests
     [InlineData("edge")]
     [InlineData("halo")]
     [InlineData("capture")]
+    [InlineData("denoise")]
     public void HelpImagesExist(string key)
     {
         var dir = Path.Combine(RepositoryRoot(), "src", "AcuLume.Gui", "Assets", "help");

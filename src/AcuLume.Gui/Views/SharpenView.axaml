@@ -375,6 +375,7 @@
                       Value="{Binding DenoiseThreshold}" />
               <TextBlock Classes="hint" Margin="0,5,0,0" TextWrapping="Wrap"
                          Text="Detail below this many measured noise sigmas is removed before sharpening, so raising the amounts costs almost no extra grain." />
+              <ContentControl Content="{Binding DenoiseHelp}" ContentTemplate="{StaticResource HelpStrip}" />
             </StackPanel>
 
             <Border Classes="divider" Margin="0,16,0,16" />

@@ -10,16 +10,20 @@ namespace AcuLume.Gui.ViewModels;
 /// build/generate-help-images.ps1, never drawn by hand, so they cannot drift away from what the
 /// pipeline actually does.
 ///
-/// Most settings move a 150 px crop by only one to three levels out of 255 at their calibrated
-/// values. Those are rendered with the setting pushed well past its preset and say so, because two
-/// identical-looking images would teach the opposite of the truth.
+/// They show synthetic targets rather than photographs, at the preset's real values. On a photograph
+/// these settings move a small crop by only a few levels out of 255 — genuinely there, but too
+/// little to see — which had forced the earlier photographic pairs to be exaggerated past their
+/// settings. A target built for the purpose needs no such dishonesty.
+///
+/// Settings whose effect is a one or two pixel rim are shown as a plot of brightness across an edge
+/// instead of as an image, because that rim is invisible in a tile and unmistakable as a curve.
 /// </summary>
-public sealed partial class HelpTopic(string key, string explanation, bool exaggerated = true) : ObservableObject
+public sealed partial class HelpTopic(string key, string explanation, bool isPlot = false) : ObservableObject
 {
     public string Explanation { get; } = explanation;
 
-    /// <summary>Whether the pair was rendered past the preset value to make the effect visible.</summary>
-    public bool IsExaggerated { get; } = exaggerated;
+    /// <summary>Whether the pair is a plot across an edge rather than a picture of the target.</summary>
+    public bool IsPlot { get; } = isPlot;
 
     // Image.Source needs an IImage; a binding to a string is not converted the way a XAML literal
     // is, so the asset is opened here. Loaded on first use, because most strips are never expanded.
@@ -51,9 +55,9 @@ public sealed partial class HelpTopic(string key, string explanation, bool exagg
         }
     }
 
-    public string Scale => IsExaggerated
-        ? "Pushed well past the preset so the effect is visible — at the calibrated value it is much subtler."
-        : "Shown at the preset value.";
+    public string Scale => IsPlot
+        ? "Brightness across an edge, at the preset's own settings. The dashed lines are the original edge, so anything beyond them is overshoot."
+        : "A test target at the preset's own settings, magnified twice.";
 
     [ObservableProperty]
     public partial bool IsExpanded { get; set; }
